@@ -6,8 +6,8 @@ import Data.Bits
 %default total
 %access private
 
--- Plenty of places in the 3DES spec use 1-based naturals, where we would like
--- 0-based naturals. So we embed the same numbers from the spec (for easy
+-- Plenty of places in the 3DES spec use 1-based indexes, where we would like
+-- 0-based indexes. So we embed the same numbers from the spec (for easy
 -- eyeball-checking), then use this to correct the difference.
 offByOne : Vect m (Fin (S n)) -> Vect m (Fin n)
 offByOne = map (\x => case strengthen (x - 1) of
