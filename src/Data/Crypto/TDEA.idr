@@ -116,19 +116,6 @@ DEA input keys =
   let [L, R] = partition 32 (IP input)
   in IP' (uncurry (flip append) (foldl iteration (L, R) keys))
 
-KS : Bits 64 -> Vect 16 (Bits 48)
-KS key = map PC2
-             (tail (scanl (\prevKey, shift =>
-                            append (map (rotateLeft shift) (partition 32 prevKey)))
-                          (PC1 key)
-                          [1, 1, 2, 2, 2, 2, 2, 2, 1, 2, 2, 2, 2, 2, 2, 1]))
-
-forwardDEA : Bits 64 -> Bits 64 -> Bits 64
-forwardDEA input key = DEA input (KS key)
-
-inverseDEA : Bits 64 -> Bits 64 -> Bits 64
-inverseDEA input key = DEA input (reverse (KS key))
-
 PC1 : Bits 64 -> Bits 64
 PC1 = selectBits (offByOne [57, 49, 41, 33, 25, 17,  9,
                              1, 58, 50, 42, 34, 26, 18,
@@ -148,6 +135,19 @@ PC2 = selectBits (offByOne [14, 17, 11, 24,  1,  5,
                             30, 40, 51, 45, 33, 48,
                             44, 49, 39, 56, 34, 53,
                             46, 42, 50, 36, 29, 32])
+
+KS : Bits 64 -> Vect 16 (Bits 48)
+KS key = map PC2
+             (tail (scanl (\prevKey, shift =>
+                            append (map (rotateLeft shift) (partition 32 prevKey)))
+                          (PC1 key)
+                          [1, 1, 2, 2, 2, 2, 2, 2, 1, 2, 2, 2, 2, 2, 2, 1]))
+
+forwardDEA : Bits 64 -> Bits 64 -> Bits 64
+forwardDEA input key = DEA input (KS key)
+
+inverseDEA : Bits 64 -> Bits 64 -> Bits 64
+inverseDEA input key = DEA input (reverse (KS key))
 
 public
 forwardTDEA1 : Bits 64 -> Bits 64 -> Bits 64 -> Bits 64 -> Bits 64
