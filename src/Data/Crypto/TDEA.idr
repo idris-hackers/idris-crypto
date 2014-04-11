@@ -83,8 +83,11 @@ P = selectBits (offByOne [16,  7, 20, 21,
                           19, 13, 30,  6,
                           22, 11,  4, 25])
 
-select : Vect 4 (Vect 16 (Fin 16)) -> Bits 6 -> Bits 4
-select table = intToBits . index x (index y table)
+select : Vect 4 (Vect 16 (Fin n)) -> Bits 6 -> Bits (log2 n)
+select table bits =
+  let row = bitsToFin (or (shiftRightLogical (and bits (intToBits 32)) (intToBits 5)) (and bits (intToBits 1)))
+  in let col = bitsToFin (shiftRightLogical (and bits (intToBits 30)) (intToBits 1))
+     in finToBits (index col (index row table))
 
 S : Vect 8 (Bits 6 -> Bits 4)
 S = map select
