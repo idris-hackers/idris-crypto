@@ -159,7 +159,11 @@ PC2 = selectBits (offByOne [14, 17, 11, 24,  1,  5,
                             44, 49, 39, 56, 34, 53,
                             46, 42, 50, 36, 29, 32])
 
-KS : Bits 64 -> Vect 16 (Bits 48)
+public
+DEAKey : Type
+DEAKey = Bits 64
+
+KS : DEAKey -> Vect 16 (Bits 48)
 KS key = map PC2
              (tail (scanl (\prevKey, shift =>
                             append (map (rotateLeft shift) (partition 32 prevKey)))
@@ -167,9 +171,9 @@ KS key = map PC2
                           [1, 1, 2, 2, 2, 2, 2, 2, 1, 2, 2, 2, 2, 2, 2, 1]))
 
 public
-forwardDEA : Bits 64 -> Bits 64 -> Bits 64
+forwardDEA : Bits 64 -> DEAKey -> Bits 64
 forwardDEA input key = DEA input (KS key)
 
 public
-inverseDEA : Bits 64 -> Bits 64 -> Bits 64
+inverseDEA : Bits 64 -> DEAKey -> Bits 64
 inverseDEA input key = DEA input (reverse (KS key))
