@@ -6,6 +6,23 @@ import Data.Bits
 %default total
 %access private
 
+-- utility functions
+
+bitsToFin : Bits n -> Fin (power 2 n)
+bitsToFin = fromInteger . bitsToInt
+
+-- FIXME: if n isn’t a power of 2, the result type is too small, EG:
+--        finToBits (the (Fin 255) 254) => MkBits 126 : Bits 7
+--       (should be `MkBits 254 : Bits 8`)
+finToBits : Fin n -> Bits (log2 n)
+finToBits = intToBits . finToInteger
+
+scanl : (b -> a -> b) -> b -> Vect n a -> Vect (S n) b
+scanl f q ls =  q :: (case ls of
+                         []   => []
+                         x::xs => scanl f (f q x) xs)
+
+
 -- Plenty of places in the 3DES spec use 1-based indexes, where we would like
 -- 0-based indexes. So we embed the same numbers from the spec (for easy
 -- eyeball-checking), then use this to correct the difference.
