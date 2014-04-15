@@ -14,10 +14,20 @@ truncate (MkBits x) = MkBits (zeroUnused (trunc' x))
 bitsToFin : Bits n -> Fin (power 2 n)
 bitsToFin = fromInteger . bitsToInt
 
--- FIXME: if n isn’t a power of 2, the result type is too small, EG:
---        finToBits (the (Fin 255) 254) => MkBits 126 : Bits 7
---       (should be `MkBits 254 : Bits 8`)
-finToBits : Fin n -> Bits (log2 n)
+divCeil : Nat -> Nat -> Nat
+divCeil x y = case x `mod` y of
+                Z   => x `div` y
+                S _ => S (x `div` y)
+
+nextPow2 : Nat -> Nat
+nextPow2 Z = Z
+nextPow2 x = if x == (2 `power` l2x)
+             then l2x
+             else S l2x
+    where
+      l2x = log2 x
+
+finToBits : Fin n -> Bits (nextPow2 n)
 finToBits = intToBits . finToInteger
 
 scanl : (b -> a -> b) -> b -> Vect n a -> Vect (S n) b
