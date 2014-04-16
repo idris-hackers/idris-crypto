@@ -41,10 +41,10 @@ instance Cast (Mod n) Nat where
     cast x = modToNat x
 
 natToMod : Nat -> Mod (S n)
-natToMod Z = mZ
-natToMod {n=n} (S x) with (S x `mod` n)
+natToMod {n=(S m)} (S x) with ((S x) `mod` (S (S m)))
   | Z = mZ
   | _ = mS (natToMod x)
+natToMod _ = mZ
 
 modToInteger : Mod n -> Integer
 modToInteger mZ = 0
