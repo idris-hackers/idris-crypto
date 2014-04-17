@@ -71,16 +71,16 @@ instance Ord (Mod n) where
 
 rotate : Mod (S n) -> Mod (S n)
 rotate {n=Z} _ = mZ
-rotate {n = S Z} (mS _) = mZ
 rotate {n = S m} mZ = mS mZ
 rotate {n = S m} (mS g) = if (mS g) == last then mZ
                                             else mS (rotate g)
--- rotate {n = S m} mZ = las
 
-(+) : Mod (S n) -> Mod (S n) -> Mod (S n)
-(+) mZ right = right
-(+) left mZ = left
-(+) {n = mZ} _ _ = mZ
+modplus : Mod (S n) -> Mod (S n) -> Mod (S n)
+modplus left right = spin left right
+  where spin : Mod (S n') -> Mod (S n) -> Mod (S n)
+        spin mZ right = right
+        spin {n' = Z} left right = rotate right
+        spin {n' = S m} (mS left) right = rotate (spin left right)
 -- (+) {n = (S m)} (mS (mS left)) (mS mZ) with (Data.Mod.(+) left right)
 -- (+) {n = (S m)} (mS left) (mS right) with (Data.Mod.(+) left right)
 -- (+) {n = (S m)} (mS left) (mS right) with (Data.Mod.(+) left right)
