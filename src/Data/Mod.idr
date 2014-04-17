@@ -3,6 +3,7 @@ module Data.Mod
 %default total
 
 ||| Modular arithmetic
+abstract
 data Mod : (n : Nat) -> Type where
   mZ : Mod (S k)
   mS : Mod k -> Mod (S k)
