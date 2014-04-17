@@ -76,18 +76,12 @@ rotate {n = S m} mZ = mS mZ
 rotate {n = S m} (mS g) = if (mS g) == last then mZ
                                             else mS (rotate g)
 
-modplus : Mod (S n) -> Mod (S n) -> Mod (S n)
-modplus left right = spin left right
+(+) : Mod (S n) -> Mod (S n) -> Mod (S n)
+(+) left right = spin left right
   where spin : Mod (S n') -> Mod (S n) -> Mod (S n)
         spin mZ right = right
         spin {n' = Z} left right = rotate right
         spin {n' = S m} (mS left) right = rotate (spin left right)
--- (+) {n = (S m)} (mS (mS left)) (mS mZ) with (Data.Mod.(+) left right)
--- (+) {n = (S m)} (mS left) (mS right) with (Data.Mod.(+) left right)
--- (+) {n = (S m)} (mS left) (mS right) with (Data.Mod.(+) left right)
--- | _ = mZ
-  -- | last = mZ
-  -- | sum = ?p
 
 fromInteger : Integer -> Mod n
 fromInteger 0 = mZ
