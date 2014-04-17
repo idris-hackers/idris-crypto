@@ -3,7 +3,6 @@ module Data.Mod
 %default total
 
 ||| Modular arithmetic
-abstract
 data Mod : (n : Nat) -> Type where
   mZ : Mod (S k)
   mS : Mod k -> Mod (S k)
@@ -40,11 +39,11 @@ modToNatInjective (mS m) (mS n) prf  =
 instance Cast (Mod n) Nat where
     cast x = modToNat x
 
-natToMod : Nat -> Mod (S n)
-natToMod {n=(S m)} (S x) with ((S x) `mod` (S (S m)))
-  | Z = mZ
-  | _ = mS (natToMod x)
-natToMod _ = mZ
+ natToMod : Nat -> Mod (S n)
+ natToMod {n=(S m)} (S x) with ((S x) `mod` (S (S m)))
+   | Z = mZ
+   | (S k) = mS (natToMod k)
+ natToMod _ = mZ
 
 modToInteger : Mod n -> Integer
 modToInteger mZ = 0
@@ -70,11 +69,24 @@ instance Ord (Mod n) where
   compare (mS _) mZ = GT
   compare (mS m) (mS m') = compare m m'
 
+rotate : Mod (S n) -> Mod (S n)
+rotate {n=Z} _ = mZ
+rotate {n = S Z} (mS _) = mZ
+rotate {n = S m} mZ = mS mZ
+rotate {n = S m} (mS g) = if (mS g) == last then mZ
+                                            else mS (rotate g)
+-- rotate {n = S m} mZ = las
+
 (+) : Mod (S n) -> Mod (S n) -> Mod (S n)
 (+) mZ right = right
-(+) (mS left) right with (Data.Mod.(+) left right)
-  | last = mZ
-  | sum = mS sum
+(+) left mZ = left
+(+) {n = mZ} _ _ = mZ
+-- (+) {n = (S m)} (mS (mS left)) (mS mZ) with (Data.Mod.(+) left right)
+-- (+) {n = (S m)} (mS left) (mS right) with (Data.Mod.(+) left right)
+-- (+) {n = (S m)} (mS left) (mS right) with (Data.Mod.(+) left right)
+-- | _ = mZ
+  -- | last = mZ
+  -- | sum = ?p
 
 fromInteger : Integer -> Mod n
 fromInteger 0 = mZ
