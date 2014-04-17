@@ -83,12 +83,6 @@ rotate {n = S m} (mS g) = if (mS g) == last then mZ
         spin {n' = Z} left right = rotate right
         spin {n' = S m} (mS left) right = rotate (spin left right)
 
-fromInteger : Integer -> Mod n
-fromInteger 0 = mZ
-fromInteger {n=n} x with (x `mod` toIntegerNat n)
-  | 0 = mZ
-  | y = mS (fromInteger (y - 1))
-
 instance Semigroup (Mod (S n)) where
   (<+>) = Data.Mod.(+)
 
@@ -97,7 +91,12 @@ instance Monoid (Mod (S n)) where
 
 instance Group (Mod (S n)) where
   inverse mZ = mZ
-  inverse {n=n} m = natToMod (n - (modToNat m))
+  inverse {n=n} m = natToMod ((S n) - (modToNat m))
+
+fromInteger : Integer -> Mod (S n)
+fromInteger {n=n} x = if x < 0
+                      then inverse (natToMod (fromInteger (-x) `mod` S n))
+                      else natToMod (fromInteger x `mod` S n)
 
 (-) : Mod (S n) -> Mod (S n) -> Mod (S n)
 (-) = (<->)
