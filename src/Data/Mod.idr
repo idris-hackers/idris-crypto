@@ -40,11 +40,11 @@ modToNatInjective (mS m) (mS n) prf  =
 instance Cast (Mod n) Nat where
     cast x = modToNat x
 
- natToMod : Nat -> Mod (S n)
- natToMod {n=(S m)} (S x) with ((S x) `mod` (S (S m)))
-   | Z = mZ
-   | (S k) = mS (natToMod k)
- natToMod _ = mZ
+natToMod : Nat -> Mod (S n)
+natToMod {n=(S m)} x with (x `mod` (S (S m)))
+  | Z = mZ
+  | (S k) = mS (natToMod k)
+natToMod _ = mZ
 
 modToInteger : Mod n -> Integer
 modToInteger mZ = 0
