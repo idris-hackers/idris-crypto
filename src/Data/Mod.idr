@@ -1,6 +1,7 @@
 module Data.Mod
 
 %default total
+%access public
 
 ||| Modular arithmetic
 abstract
