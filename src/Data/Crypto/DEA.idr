@@ -8,11 +8,14 @@ import Data.Bits
 
 -- utility functions
 
-truncate : Bits (n+m) -> Bits n
-truncate (MkBits x) = MkBits (zeroUnused (trunc' x))
+trim : Bits (1 + n) -> Bits n
+trim b = truncate b
 
 bitsToFin : Bits n -> Fin (power 2 n)
-bitsToFin = fromInteger . bitsToInt
+bitsToFin {n=Z}   _ = fZ
+bitsToFin {n=S _} b = if (b `and` (intToBits 1)) /= (intToBits 0)
+                      then shift 1 (2 * (bitsToFin (trim b)))
+                      else 2 * (bitsToFin (trim b))
 
 divCeil : Nat -> Nat -> Nat
 divCeil x y = case x `mod` y of
@@ -30,12 +33,6 @@ nextPow2 x = if x == (2 `power` l2x)
 finToBits : Fin n -> Bits (nextPow2 n)
 finToBits = intToBits . finToInteger
 
-scanl : (b -> a -> b) -> b -> Vect n a -> Vect (S n) b
-scanl f q ls =  q :: (case ls of
-                         []   => []
-                         x::xs => scanl f (f q x) xs)
-
-
 -- Plenty of places in the 3DES spec use 1-based indexes, where we would like
 -- 0-based indexes. So we embed the same numbers from the spec (for easy
 -- eyeball-checking), then use this to correct the difference.
@@ -44,13 +41,16 @@ offByOne = map (\x => case strengthen (x - 1) of
                    Left _ => _|_
                    Right x => x)
 
-partition : (n : Nat) -> Bits (n * m) -> Vect m (Bits n)
-append : Vect m (Bits n) -> Bits (n * m)
-append = foldl (\acc, next => shiftLeft (intToBits 4) (zeroExtend acc) `or` zeroExtend acc)
-               (intToBits 0)
+partition : (n : Nat) -> Bits (m * n) -> Vect m (Bits n)
+append : Bits m -> Bits n -> Bits (m + n)
+append {n=n} a b = shiftLeft n (zeroExtend a) `or` zeroExtend b
+concat : Vect m (Bits n) -> Bits (m * n)
+concat = foldl append (intToBits 0)
 
 selectBits : Vect m (Fin n) -> Bits n -> Bits m
-selectBits positions input = append (map (flip getBit input) positions)
+selectBits positions input = foldl (\acc, b => shiftLeft acc (intToBits 1) `and` b)
+                                   (intToBits 0)
+                                   (map (\x => intToBits (if getBit x input then 1 else 0)) positions)
 
 IP : Bits 64 -> Bits 64
 IP = selectBits (offByOne [58, 50, 42, 34, 26, 18, 10,  2,
@@ -139,7 +139,7 @@ S = map select
           [ 2,  1, 14,  7,  4, 10,  8, 13, 15, 12,  9,  0,  3,  5,  6, 11]]]
 
 f : Bits 32 -> Bits 48 -> Bits 32
-f R K = P (append (zipWith apply S (partition 6 (E R `xor` K))))
+f R K = P (concat (zipWith apply S (partition 6 (E R `xor` K))))
 
 iteration : (Bits 32, Bits 32) -> Bits 48 -> (Bits 32, Bits 32)
 iteration (L, R) K = (R, L `xor` f R K)
@@ -176,7 +176,7 @@ DEAKey = Bits 64
 KS : DEAKey -> Vect 16 (Bits 48)
 KS key = map PC2
              (tail (scanl (\prevKey, shift =>
-                            append (map (rotateLeft shift) (partition 32 prevKey)))
+                            concat (map (rotateLeft shift) (partition 32 prevKey)))
                           (PC1 key)
                           [1, 1, 2, 2, 2, 2, 2, 2, 1, 2, 2, 2, 2, 2, 2, 1]))
 
