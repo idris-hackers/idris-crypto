@@ -1,6 +1,6 @@
-module Data.Crypto.TDEA
+module Data.Crypto.Encryption.TDEA
 
-import Data.Crypto.DEA
+import Data.Crypto.Encryption.DEA
 
 %default total
 %access private

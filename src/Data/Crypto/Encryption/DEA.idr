@@ -1,4 +1,4 @@
-module Data.Crypto.DEA
+module Data.Crypto.Encryption.DEA
 
 import Control.Isomorphism
 import Data.Bits
@@ -187,3 +187,6 @@ forwardDEA input key = DEA input (KS key)
 public
 inverseDEA : Bits 64 -> DEAKey -> Bits 64
 inverseDEA input key = DEA input (reverse (KS key))
+
+fullDEA : Iso (Bits 64, DEAKey) (Bits 64)
+fullDEA = MkIso forwardDEA inverseDEA ?DEAiso
