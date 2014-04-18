@@ -59,17 +59,17 @@ last : Mod (S n)
 last {n=Z} = mZ
 last {n=S _} = mS last
 
-instance MinBound (Mod (S n)) where
-  minBound = mZ
-
-instance MaxBound (Mod (S n)) where
-  maxBound = last
-
 instance Ord (Mod n) where
   compare mZ mZ = EQ
   compare mZ (mS _) = LT
   compare (mS _) mZ = GT
   compare (mS m) (mS m') = compare m m'
+
+instance MinBound (Mod (S n)) where
+  minBound = mZ
+
+instance MaxBound (Mod (S n)) where
+  maxBound = last
 
 rotate : Mod (S n) -> Mod (S n)
 rotate {n=Z} _ = mZ
