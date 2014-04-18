@@ -2,24 +2,14 @@ idris-crypto
 ============
 
 This project looks to develop cryptographic primitives using the general purpose functional language [Idris](http://www.idris-lang.org).
-Idris has features influenced by Haskell and ML, including:
 
-* Full dependent types with dependent pattern matching
-* where clauses, with rule, simple case expressions, pattern matching let and lambda bindings
-* Dependent records with projection and update
-* Type classes
-* Monad comprehensions
-* Syntactic conveniences for lists, tuples, dependent pairs
-* do notation and idiom brackets
-* significant syntax
-* Extensible syntax
-* Tactic based theorem proving (influenced by Coq)
-* Cumulative universes
-* Totality checking
-* Simple foreign function interface (to C)
-* Hugs style interactive environment
+It is important to note that the Idris language is first and foremost a research project, and thus the tooling provided by `idris-crypto` should not necessarily be seen as production ready nor for industrial use.
 
-It is important to note that the `Idris` language is first and foremost a research project, and thus the tooling provided by `idris-crypto` should not necessarily be seen as production ready nor for industrial use.
+## Motivation
+
+Cryptography is something that is important to get right. It is also difficult to get right. Most languages make it too easy to shoot yourself in the foot ([buffer overflows](http://heartbleed.com), [gotos](https://www.imperialviolet.org/2014/02/22/applebug.html), etc.) and even those that don’t offer limited help, but some languages make it possible to _prove_ arbitrary properties of a program and this ability can give you more confidence that your program is doing what it should. However, a cryptography library also needs to be readily usable by other software, hopefully not tied to code written in its implementation language.
+
+Idris is a win on both sides here. On the one hand, it allows us to prove things about the code, but unlike other proof assistants has [LLVM](http://en.wikipedia.org/wiki/LLVM) and JS backends, which means that it can be linked to very much like a C library, and can also be used by JS, on both the server and client side. It is in a relatively unique position that is ideal for crypto.
 
 ## Note on Security
 
@@ -51,6 +41,24 @@ arguably provides an really interesting development environment in which to expl
 
 The list of supported primitives will be summarised here.
 
-* 3DES
+### Encryption
+* DES **insecure**
+* Triple DES
 
+### MAC / cryptographic hash
+* SHA-1 (and the rest of the SHS functions – SHA-256, SHA-512, etc.)
 
+## Plans / Notes
+
+* Get a couple of the more common primitives for each type of function
+* work on getting something that is easily usable via an FFI
+* prove interesting properties about various primitives (look in papers for these)
+* start building up higher-level components / protocols
+* MOAR PRIMITIVES
+
+* would be nice to require that insecure primitives run inside of some monad, but need some restricted escape mechanism so, EG, TDEA can be secure while DEA isn’t.
+* for DSA, implement it deterministically, both to avoid bad pRNGs (which we should do in general), but also just because determinism is nice
+
+## Contributions
+
+Every contribution is appreciated – from documentation, to fixing typos, to adding one little function to a data structure. Even if you’re just touching Idris, dependent types, etc. for the first time. [Join in!](CONTRIBUTING.md)
