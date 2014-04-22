@@ -1,5 +1,6 @@
 module Data.Crypto.Encryption.TDEA
 
+import Data.Crypto.Encryption.Classes
 import Data.Crypto.Encryption.DEA
 
 %default total
@@ -14,21 +15,24 @@ TDEA2Key : Type
 TDEA2Key = Vect 2 DEAKey
 
 public
-forwardTDEA1 : Bits 64 -> TDEA1Key -> Bits 64
-forwardTDEA1 d key =
-  forwardDEA (inverseDEA (forwardDEA d (index 0 key)) (index 1 key))
-             (index 2 key)
+data TripleDataEncryptionAlogrithm : Fin2 -> Type where
+  TDEA1 : TDEA1Key -> TripleDataEncryptionAlgorithm 0
+  TDEA2 : TDEA2Key -> TripleDataEncryptionAlgorithm 1
 
-public
-forwardTDEA2 : Bits 64 -> TDEA2Key -> Bits 64
-forwardTDEA2 d key = forwardTDEA1 d (key ++ [index 0 key])
+instance BlockCipher (TripleDataEncryptionAlgorithm 0) where
+  bitsPerBlock = 64
+  maximumBlocks = power 2 32
+  encryptBlock (TDEA1 key) block =
+    encryptBlock (DEA (index 2 key))
+                 (decryptBlock (DEA (index 1 key))
+                               (encryptBlock (DEA (index 0 key)) block))
+  decryptBlock (TDEA1 key) block =
+    decryptBlock (DEA (index 0 key))
+                 (encryptBlock (DEA (index 1 key))
+                               (decryptBlock (DEA (index 2 key)) block))
 
-public
-inverseTDEA1 : Bits 64 -> TDEA1Key -> Bits 64
-inverseTDEA1 d key =
-  inverseDEA (forwardDEA (inverseDEA d (index 2 key)) (index 1 key))
-             (index 0 key)
-
-public
-inverseTDEA2 : Bits 64 -> TDEA2Key -> Bits 64
-inverseTDEA2 d key = inverseTDEA1 d (key ++ [index 0 key])
+instance BlockCipher (TripleDataEncryptionAlgorithm 1) where
+  bitsPerBlock = 64
+  maximumBlocks = power 2 20
+  encryptBlock (TDEA2 key) = encryptBlock (TDEA1 (key ++ [index 0 key]))
+  decryptBlock (TDEA2 key) = decryptBlock (TDEA1 (key ++ [index 0 key]))

@@ -3,6 +3,8 @@ module Data.Crypto.Encryption.DEA
 import Control.Isomorphism
 import Data.Bits
 
+import Data.Crypto.Encryption.Classes
+
 %default total
 %access private
 
@@ -144,8 +146,8 @@ f R K = P (concat (zipWith apply S (partition 6 (E R `xor` K))))
 iteration : (Bits 32, Bits 32) -> Bits 48 -> (Bits 32, Bits 32)
 iteration (L, R) K = (R, L `xor` f R K)
 
-DEA : Bits 64 -> Vect 16 (Bits 48) -> Bits 64
-DEA input keys =
+centralDEA : Bits 64 -> Vect 16 (Bits 48) -> Bits 64
+centralDEA input keys =
   let [L, R] = partition 32 (IP input)
   in IP' (uncurry (flip append) (foldl iteration (L, R) keys))
 
@@ -173,20 +175,19 @@ public
 DEAKey : Type
 DEAKey = Bits 64
 
+public
+data DataEncryptionAlgorithm : Type where
+  DEA : DEAKey -> DataEncryptionAlgorithm
+
 KS : DEAKey -> Vect 16 (Bits 48)
 KS key = map PC2
              (tail (scanl (\prevKey, shift =>
                             concat (map (rotateLeft shift) (partition 32 prevKey)))
                           (PC1 key)
                           [1, 1, 2, 2, 2, 2, 2, 2, 1, 2, 2, 2, 2, 2, 2, 1]))
-
-public
-forwardDEA : Bits 64 -> DEAKey -> Bits 64
-forwardDEA input key = DEA input (KS key)
-
-public
-inverseDEA : Bits 64 -> DEAKey -> Bits 64
-inverseDEA input key = DEA input (reverse (KS key))
-
-fullDEA : Iso (Bits 64, DEAKey) (Bits 64)
-fullDEA = MkIso forwardDEA inverseDEA ?DEAiso
+ 
+instance BlockCipher DataEncryptionAlgorithm where
+  bitsPerBlock = 64
+  maximumBlocks = 0
+  encryptBlock (DEA key) block = centralDEA block (KS key)
+  decryptBlock (DEA key) block = centralDEA block (reverse (KS key))
