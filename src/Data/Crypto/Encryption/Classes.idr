@@ -1,0 +1,75 @@
+module Data.Crypto.Encryption.Classes
+
+import Data.Bits
+
+%default total
+%access private
+
+public
+class Serializable a where
+  encode : a -> List (Bits n)
+  decode : List (Bits n) -> a
+
+||| for a block cypher, you only need to provide functions to encrypt/decrypt a
+||| single block.
+public
+class BlockCipher k where
+  bitsPerBlock : Nat
+  maximumBlocks : Nat
+  encryptBlock : k -> Bits bitsPerBlock -> Bits bitsPerBlock
+  decryptBlock : k -> Bits bitsPerBlock -> Bits bitsPerBlock
+  -- blockTranslation : k -> Iso b b
+  -- blockTranslation = MkIso (encryptBlock k) (decryptBlock k)
+
+||| The encryption mode specifies how to apply a block cipher to multiple blocks
+public
+class EncryptionMode (em : Nat -> Type) where
+  encryptBlocks : BlockCipher k
+                  => k -> em bitsPerBlock -> List (Bits bitsPerBlock)
+                  -> List (Bits bitsPerBlock)
+  decryptBlocks : BlockCipher k
+                  => k -> em bitsPerBlock -> List (Bits bitsPerBlock)
+                  -> List (Bits bitsPerBlock)
+
+public
+encrypt : (BlockCipher k, EncryptionMode em, Serializable m, Serializable c)
+          => k -> em bitsPerBlock -> m -> c
+encrypt key mode message = decode (encryptBlocks key mode (encode message))
+public
+decrypt : (BlockCipher k, EncryptionMode em, Serializable c, Serializable m)
+          => k -> em bitsPerBlock -> m -> c
+decrypt key mode ctext = decode (encryptBlocks key mode (encode ctext))
+
+data ElectronicCookbook : Nat -> Type where
+  ECB : ElectronicCookbook n
+
+-- This is ECB (Electronic Cookbook) - no initialization vector
+-- ECB should be considered insecure regardless of the cipher used
+instance EncryptionMode ElectronicCookbook where
+  encryptBlocks key _ blocks = map (encryptBlock key) blocks
+  decryptBlocks key _ blocks = map (decryptBlock key) blocks
+
+data CipherBlockChainingMode : Nat -> Type where
+  CBC : Bits n -> CipherBlockChainingMode n
+
+instance EncryptionMode CipherBlockChainingMode where
+  encryptBlocks _ _ [] = []
+  encryptBlocks key (CBC iv) (plain::rest) =
+    let ciph = encryptBlock key (plain `xor` iv)
+    in ciph :: encryptBlocks key (CBC ciph) rest
+  decryptBlocks _ _ [] = []
+  decryptBlocks key (CBC iv) (ciph::rest) =
+    (decryptBlock key ciph `xor` iv) :: decryptBlocks key (CBC ciph) rest
+
+data PropagatingCipherBlockChainingMode : Nat -> Type where
+  PCBC : Bits n -> PropagatingCipherBlockChainingMode n
+
+instance EncryptionMode PropagatingCipherBlockChainingMode where
+  encryptBlocks _ _ [] = []
+  encryptBlocks key (PCBC iv) (plain::rest) =
+    let ciph = encryptBlock key (plain `xor` iv)
+    in ciph :: encryptBlocks key (PCBC (plain `xor` ciph)) rest
+  decryptBlocks _ _ [] = []
+  decryptBlocks key (PCBC iv) (ciph::rest) =
+    let plain = decryptBlock key ciph `xor` iv
+    in plain :: decryptBlocks key (PCBC (plain `xor` ciph)) rest
