@@ -73,3 +73,28 @@ instance EncryptionMode PropagatingCipherBlockChainingMode where
   decryptBlocks key (PCBC iv) (ciph::rest) =
     let plain = decryptBlock key ciph `xor` iv
     in plain :: decryptBlocks key (PCBC (plain `xor` ciph)) rest
+
+data CipherFeedbackMode : Nat -> Type where
+  CFB : Bits n -> CipherFeedbackMode n
+  
+instance EncryptionMode CipherFeedbackMode where
+  encryptBlocks _ _ [] = []
+  encryptBlocks key (CFB iv) (plain::rest) =
+    let ciph = encryptBlock key iv `xor` plain
+    in ciph :: encryptBlocks key (PCBC ciph) rest
+  decryptBlocks _ _ [] = []
+  decryptBlocks key (CFB iv) (ciph::rest) =
+    (decryptBlock key iv `xor` ciph) :: decryptBlocks key (PCBC ciph) rest
+
+data OutputFeedbackMode : Nat -> Type where
+  OFB : Bits n -> OutputFeedbackMode n
+
+instance EncryptionMode OutputFeedbackMode where
+  encryptBlocks _ _ [] = []
+  encryptBlocks key (OFB iv) (plain::rest) =
+    let newIV = encryptBlock key iv
+    in (plain `xor` newIV) :: encryptBlocks key (OFB newIV) rest
+  decryptBlocks _ _ [] = []
+  decryptBlocks key (OFB iv) (ciph::rest) =
+    let newIV = decryptBlock key iv
+    in (ciph `xor` newIV) :: decryptBlocks key (OFB newIV) rest
