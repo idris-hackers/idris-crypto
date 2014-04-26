@@ -38,16 +38,22 @@ finToBits = intToBits . finToInteger
 -- Plenty of places in the 3DES spec use 1-based indexes, where we would like
 -- 0-based indexes. So we embed the same numbers from the spec (for easy
 -- eyeball-checking), then use this to correct the difference.
-offByOne : Vect m (Fin (S n)) -> Vect m (Fin n)
-offByOne = map (\x => case strengthen (x - 1) of
-                   Left _ => _|_
-                   Right x => x)
+offByOne : Vect m (Fin (S (S n))) -> Vect m (Fin (S n))
+offByOne = map (\x => case x of
+                   fZ   => fZ
+                   fS y => y)
 
-partition : (n : Nat) -> Bits (m * n) -> Vect m (Bits n)
+partition : Bits (m * n) -> Vect m (Bits n)
+partition {m=Z}         _    = Prelude.Vect.Nil
+partition {m=S m} {n=n} bits =
+  truncate (replace (plusCommutative n (m*n)) bits)
+  :: partition (truncate (shiftRightLogical (cast n) bits))
 append : Bits m -> Bits n -> Bits (m + n)
-append {n=n} a b = shiftLeft n (zeroExtend a) `or` zeroExtend b
+append {m=m} {n=n} a b = shiftLeft (cast n) (zeroExtend a) `or` replace (plusCommutative n m) (zeroExtend b)
 concat : Vect m (Bits n) -> Bits (m * n)
-concat = foldl append (intToBits 0)
+concat {m=Z}         _         = cast Z
+concat {m=S Z} {n=n} [bits]    = replace (sym (plusZeroRightNeutral n)) bits
+concat {m=S _}       (b::rest) = append b (concat rest)
 
 selectBits : Vect m (Fin n) -> Bits n -> Bits m
 selectBits positions input = foldl (\acc, b => shiftLeft acc (intToBits 1) `and` b)
@@ -98,10 +104,10 @@ P = selectBits (offByOne [16,  7, 20, 21,
                           19, 13, 30,  6,
                           22, 11,  4, 25])
 
-select : Vect 4 (Vect 16 (Fin n)) -> Bits 6 -> Bits (log2 n)
+select : Vect 4 (Vect 16 (Fin n)) -> Bits 6 -> Bits (nextPow2 n)
 select table bits =
-  let row = bitsToFin (the (Bits 2) (truncate (or (shiftRightLogical (and bits (intToBits 32)) (intToBits 5)) (and bits (intToBits 1)))))
-  in let col = bitsToFin (the (Bits 4) (truncate (shiftRightLogical (and bits (intToBits 30)) (intToBits 1))))
+  let row = bitsToFin (truncate {m=4} (or (shiftRightLogical (cast 5) (and bits (intToBits 32))) (and bits (intToBits 1))))
+  in let col = bitsToFin (truncate {m=2} (shiftRightLogical (cast 1) (and bits (intToBits 30))))
      in finToBits (index col (index row table))
 
 S : Vect 8 (Bits 6 -> Bits 4)
@@ -141,14 +147,14 @@ S = map select
           [ 2,  1, 14,  7,  4, 10,  8, 13, 15, 12,  9,  0,  3,  5,  6, 11]]]
 
 f : Bits 32 -> Bits 48 -> Bits 32
-f R K = P (concat (zipWith apply S (partition 6 (E R `xor` K))))
+f R K = P (concat (zipWith apply S (partition (E R `xor` K))))
 
 iteration : (Bits 32, Bits 32) -> Bits 48 -> (Bits 32, Bits 32)
 iteration (L, R) K = (R, L `xor` f R K)
 
 centralDEA : Bits 64 -> Vect 16 (Bits 48) -> Bits 64
 centralDEA input keys =
-  let [L, R] = partition 32 (IP input)
+  let [L, R] = the (Vect 2 (Bits 32)) (partition (IP input))
   in IP' (uncurry (flip append) (foldl iteration (L, R) keys))
 
 PC1 : Bits 64 -> Bits 64
