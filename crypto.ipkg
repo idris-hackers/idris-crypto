@@ -1,0 +1,7 @@
+package crypto
+
+sourcedir = src
+modules = Data.Crypto.Encryption.ARC4,
+          Data.Crypto.Encryption.TDEA,
+          Data.Crypto.MAC.SHS
+opts = ""
