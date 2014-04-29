@@ -31,6 +31,10 @@ modToNat : Mod n -> Nat
 modToNat mZ = Z
 modToNat (mS k) = S (modToNat k)
 
+modToFin : Mod n -> Fin n
+modToFin mZ = fZ
+modToFin (mS k) = fS (modToFin k)
+
 modToNatInjective : (mm : Mod k) -> (mn : Mod k) -> (modToNat mm) = (modToNat mn) -> mm = mn
 modToNatInjective mZ     mZ     refl = refl
 modToNatInjective (mS m) mZ     refl impossible
@@ -40,6 +44,9 @@ modToNatInjective (mS m) (mS n) prf  =
 
 instance Cast (Mod n) Nat where
     cast x = modToNat x
+
+instance Cast (Mod n) (Fin n) where
+    cast x = modToFin x
 
 natToMod : Nat -> Mod (S n)
 natToMod {n=(S m)} x with (x `mod` (S (S m)))

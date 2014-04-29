@@ -44,6 +44,12 @@ public
 swap : Fin n -> Fin n -> Vect n a -> Vect n a
 swap i j v = replaceAt j (index i v) (replaceAt i (index j v) v)
 
+public partial
+tightmod : Nat -> (m : Nat) -> so (m /= Z) -> Fin m
+tightmod left (S right) p = if left < (S right)
+                            then fromMaybe fZ (natToFin left (S right))
+                            else tightmod (left - (S right)) (S right) p
+
 public
 Byte : Type
 Byte = Bits 8
