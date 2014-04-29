@@ -2,6 +2,7 @@ module Data.Crypto.Encryption.BlockCipher
 
 import Data.Bits
 import Data.Crypto.Util
+import Data.Crypto.Encryption.SymmetricCipher
 
 %default total
 %access private
@@ -26,15 +27,6 @@ class EncryptionMode (em : Nat -> Type) where
   decryptBlocks : BlockCipher k
                   => k -> em bitsPerBlock -> List (Bits bitsPerBlock)
                   -> List (Bits bitsPerBlock)
-
-public
-encrypt : (BlockCipher k, EncryptionMode em, Serializable m, Serializable c)
-          => k -> em bitsPerBlock -> m -> c
-encrypt key mode message = decode (encryptBlocks key mode (encode message))
-public
-decrypt : (BlockCipher k, EncryptionMode em, Serializable c, Serializable m)
-          => k -> em bitsPerBlock -> m -> c
-decrypt key mode ctext = decode (encryptBlocks key mode (encode ctext))
 
 data ElectronicCookbook : Nat -> Type where
   ECB : ElectronicCookbook n
@@ -94,3 +86,9 @@ instance EncryptionMode OutputFeedbackMode where
   decryptBlocks key (OFB iv) (ciph::rest) =
     let newIV = decryptBlock key iv
     in (ciph `xor` newIV) :: decryptBlocks key (OFB newIV) rest
+
+instance (BlockCipher bc, EncryptionMode em) =>
+         SymmetricCipher (bc, em bitsPerBlock) where
+  bitsPerChunk = bitsPerBlock
+  encryptMessage = uncurry encryptBlocks
+  decryptMessage = uncurry decryptBlocks

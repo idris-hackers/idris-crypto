@@ -1,6 +1,7 @@
 module Data.Crypto.Encryption.StreamCipher
 
 import Data.Crypto.Util
+import Data.Crypto.Encryption.SymmetricCipher
 
 %default total
 %access public
@@ -23,17 +24,18 @@ decryptStream :
   StreamCipher k => k -> Stream (Bits bitsPerUnit) -> Stream (Bits bitsPerUnit)
 decryptStream = confoundStream
 
-confoundMessage : (StreamCipher k, Serializable i, Serializable o) =>
-                  k -> i -> o
+confoundMessage :
+  StreamCipher k => k -> List (Bits bitsPerUnit) -> List (Bits bitsPerUnit)
 confoundMessage key message =
-  -- NB: Ideally, this would use the native word size, so this should be updated
-  --     once we have a way to get that.
-  let encodedMsg = encode message
-  in decode (toList (Prelude.Vect.zipWith xor
-                      (Prelude.Stream.take (length encodedMsg)
-                                           (generateKeystream key))
-                      (fromList encodedMsg)))
-encryptMessage : (StreamCipher k, Serializable m, Serializable c) => k -> m -> c
-encryptMessage = confoundMessage
-decryptMessage : (StreamCipher k, Serializable c, Serializable m) => k -> c -> m
-decryptMessage = confoundMessage
+  toList (Prelude.Vect.zipWith xor
+                               (Prelude.Stream.take (length message)
+                                                    (generateKeystream key))
+                               (fromList message))
+
+instance StreamCipher sc => SymmetricCipher sc where
+  bitsPerChunk = bitsPerUnit
+  encryptMessage = confoundMessage
+  decryptMessage = confoundMessage
+
+confound : (StreamCipher k, Serializable i, Serializable o) => k -> i -> o
+confound key = decode . confoundMessage key . encode
