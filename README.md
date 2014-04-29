@@ -44,9 +44,32 @@ The list of supported primitives will be summarised here.
 ### Encryption
 * DES **insecure**
 * Triple DES
+* ARC4 **insecure**
 
 ### MAC / cryptographic hash
 * SHA-1 (and the rest of the SHS functions – SHA-256, SHA-512, etc.)
+
+## Usage
+
+The easiest way to use the library is simply using encrypt/decrypt. You can pass it either a stream cipher, or a pair of a block cypher and encryption mode:
+
+```
+> the String (encrypt (ARC4 key) "some message")
+"cuhrclh,.urch,.lih.ulchu" : String
+> the String (decrypt (TDEA1 [key, key, key], CFB iv) "t893gy'c.,aihntebgl'"
+"some message" : String
+```
+
+If you already have lists of bytes, try encryptMessage/decryptMessage instead.
+
+The other useful pair of operations is specific to stream ciphers:
+
+```
+> decryptStream (ARC4 key) stream
+? : Stream
+```
+
+and now you’re pipelining!
 
 ## Plans / Notes
 
