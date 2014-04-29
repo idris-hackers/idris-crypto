@@ -3,37 +3,13 @@ module Data.Crypto.Encryption.DEA
 import Control.Isomorphism
 import Data.Bits
 
-import Data.Crypto.Encryption.Classes
+import Data.Crypto.Encryption.BlockCipher
+import Data.Crypto.Util
 
 %default total
 %access private
 
 -- utility functions
-
-trim : Bits (1 + n) -> Bits n
-trim b = truncate b
-
-bitsToFin : Bits n -> Fin (power 2 n)
-bitsToFin {n=Z}   _ = fZ
-bitsToFin {n=S _} b = if (b `and` (intToBits 1)) /= (intToBits 0)
-                      then shift 1 (2 * (bitsToFin (trim b)))
-                      else 2 * (bitsToFin (trim b))
-
-divCeil : Nat -> Nat -> Nat
-divCeil x y = case x `mod` y of
-                Z   => x `div` y
-                S _ => S (x `div` y)
-
-nextPow2 : Nat -> Nat
-nextPow2 Z = Z
-nextPow2 x = if x == (2 `power` l2x)
-             then l2x
-             else S l2x
-    where
-      l2x = log2 x
-
-finToBits : Fin n -> Bits (nextPow2 n)
-finToBits = intToBits . finToInteger
 
 -- Plenty of places in the 3DES spec use 1-based indexes, where we would like
 -- 0-based indexes. So we embed the same numbers from the spec (for easy

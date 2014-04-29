@@ -1,14 +1,10 @@
-module Data.Crypto.Encryption.Classes
+module Data.Crypto.Encryption.BlockCipher
 
 import Data.Bits
+import Data.Crypto.Util
 
 %default total
 %access private
-
-public
-class Serializable a where
-  encode : a -> List (Bits n)
-  decode : List (Bits n) -> a
 
 ||| for a block cypher, you only need to provide functions to encrypt/decrypt a
 ||| single block.
