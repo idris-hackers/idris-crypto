@@ -44,11 +44,22 @@ public
 swap : Fin n -> Fin n -> Vect n a -> Vect n a
 swap i j v = replaceAt j (index i v) (replaceAt i (index j v) v)
 
-public partial
-tightmod : Nat -> (m : Nat) -> so (m /= Z) -> Fin m
-tightmod left (S right) p = if left < (S right)
-                            then fromMaybe fZ (natToFin left (S right))
-                            else tightmod (left - (S right)) (S right) p
+public
+notZero : Nat -> Type
+notZero Z = _|_
+notZero (S n) = ()
+
+public
+tightmod : Nat -> (m : Nat) -> {default () ok : notZero m} -> Fin m
+tightmod _ Z {ok=prf} = FalseElim prf
+tightmod left (S modulus) = tightmod' left left modulus
+  where
+    tightmod' : Nat -> Nat -> (n : Nat) -> Fin (S n)
+    tightmod' Z center right = fromMaybe fZ (natToFin center (S right))
+    tightmod' (S left) center right =
+      if lte center right
+      then fromMaybe fZ (natToFin center (S right))
+      else tightmod' left (center - (S right)) right
 
 public
 Byte : Type

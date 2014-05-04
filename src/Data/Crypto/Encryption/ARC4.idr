@@ -9,38 +9,37 @@ import Data.Crypto.Encryption.StreamCipher
 %default total
 %access private
 
-KeySize : Type
-KeySize = (n : Fin 256 ** so (n /= fZ))
+-- This is off-by-one to make it easy to prove non-zero with (S x) in the code.
+-- Hopefully, no one will ever actually need to construct one of these
+-- explicitly.
+KeySizeMin1 : Type
+KeySizeMin1 = Fin 255
 
 public
-ARC4Key : KeySize -> Type
-ARC4Key (n ** p) = Vect (finToNat n) (Mod 256) -- should be Byte, but can’t convert yet
-
-postulate stillNotZero : (x : Fin (S n)) -> so (x /= fZ) -> so (cast x /= Z)
+ARC4Key : KeySizeMin1 -> Type
+ARC4Key n = Vect (S (cast n)) (Mod 256) -- should be Byte, but can’t convert yet
 
 public
-data AllegedRivestCipher4 : KeySize -> Type where
+data AllegedRivestCipher4 : KeySizeMin1 -> Type where
   ARC4 : ARC4Key n -> AllegedRivestCipher4 n
 
 KSA : ARC4Key n -> Vect 256 (Mod 256)
-KSA {n=(n ** p)} key =
-  fst (runIdentity (runStateT (nextJ (map Prelude.Classes.fromInteger (fromList [0..255])))
-                              (0, 0)))
+KSA {n=n} key =
+  nextJ 255 0 0 (map Prelude.Classes.fromInteger (fromList [0..255]))
   where
-    nextJ : Vect 256 (Mod 256) -> State (Mod 256, Mod 256) (Vect 256 (Mod 256))
-    nextJ S = do
-      (i, j) <- get
-      let ind = tightmod (cast i) (cast n) (stillNotZero n p)
-      let pos = index ind key
-      let newJ = the (Mod 256) (j + index (cast i) S + pos)
-      let newS = (swap (cast i) (cast newJ) S)
-      if i == last
-        then
-          return newS
-        else do
-          put (i + 1, newJ)
-          nextJ newS
-
+    nextJ : Nat -> Fin 256 -> Mod 256 -> Vect 256 (Mod 256) -> Vect 256 (Mod 256)
+    nextJ Z i j s =
+      let ind = tightmod (cast i) (S (cast n))
+      in let newJ = j + index i s + index ind key
+         in swap i (cast newJ) s
+    nextJ (S c) i j s =
+      let ind = tightmod (cast i) (S (cast n))
+      in let newJ = j + index i s + index ind key
+         in let newS = (swap i (cast newJ) s)
+            in case strengthen (fS i) of
+              Left _ => newS
+              Right newI => nextJ c newI newJ newS
+    
 PGRA : Mod 256 -> Mod 256 -> Vect 256 (Mod 256) -> Stream Byte
 PGRA i j S = let newI = i + 1
              in let newJ = j + index (cast newI) S
