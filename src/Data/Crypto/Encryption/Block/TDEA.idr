@@ -1,7 +1,7 @@
 module Data.Crypto.Encryption.TDEA
 
-import Data.Crypto.Encryption.Classes
-import Data.Crypto.Encryption.DEA
+import Data.Crypto.Encryption.Block
+import Data.Crypto.Encryption.Block.DEA
 
 %default total
 %access private

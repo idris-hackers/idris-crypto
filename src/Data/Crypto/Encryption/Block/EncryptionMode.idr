@@ -1,32 +1,9 @@
-module Data.Crypto.Encryption.BlockCipher
+module Data.Crypto.Encryption.Block.EncryptionMode
 
 import Data.Bits
-import Data.Crypto.Util
-import Data.Crypto.Encryption.SymmetricCipher
 
 %default total
-%access private
-
-||| for a block cypher, you only need to provide functions to encrypt/decrypt a
-||| single block.
-public
-class BlockCipher k where
-  bitsPerBlock : Nat
-  maximumBlocks : Nat
-  encryptBlock : k -> Bits bitsPerBlock -> Bits bitsPerBlock
-  decryptBlock : k -> Bits bitsPerBlock -> Bits bitsPerBlock
-  -- blockTranslation : k -> Iso b b
-  -- blockTranslation = MkIso (encryptBlock k) (decryptBlock k)
-
-||| The encryption mode specifies how to apply a block cipher to multiple blocks
-public
-class EncryptionMode (em : Nat -> Type) where
-  encryptBlocks : BlockCipher k
-                  => k -> em bitsPerBlock -> List (Bits bitsPerBlock)
-                  -> List (Bits bitsPerBlock)
-  decryptBlocks : BlockCipher k
-                  => k -> em bitsPerBlock -> List (Bits bitsPerBlock)
-                  -> List (Bits bitsPerBlock)
+%access public
 
 data ElectronicCookbook : Nat -> Type where
   ECB : ElectronicCookbook n
@@ -86,9 +63,3 @@ instance EncryptionMode OutputFeedbackMode where
   decryptBlocks key (OFB iv) (ciph::rest) =
     let newIV = decryptBlock key iv
     in (ciph `xor` newIV) :: decryptBlocks key (OFB newIV) rest
-
-instance (BlockCipher bc, EncryptionMode em) =>
-         SymmetricCipher (bc, em bitsPerBlock) where
-  bitsPerChunk = bitsPerBlock
-  encryptMessage = uncurry encryptBlocks
-  decryptMessage = uncurry decryptBlocks
