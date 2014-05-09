@@ -34,7 +34,3 @@ instance Monad Security where
   (MkSecure level a) >>= f =
     case f a of
       MkSecure level' b => MkSecure (level <+> level') b
-
--- instance Serializable a => Serializable (Security a) where
---   encode (MkSecure _ a) = encode a
---   decode = MkSecure Unknown . decode
