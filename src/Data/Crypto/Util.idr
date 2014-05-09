@@ -69,3 +69,20 @@ public
 class Serializable a where
   encode : a -> List (Bits n)
   decode : List (Bits n) -> a
+
+-- Arrow defined for functions
+infixr 3 ***
+infixr 3 &&&
+public first : (a -> c) -> (a, b) -> (c, b)
+first f = (\(a, b) => (f a, b))
+public second : (b -> d) -> (a, b) -> (a, d)
+second f = (\(a, b) => (a, f b))
+public (***) : (a -> c) -> (b -> d) -> (a, b) -> (c, d)
+f *** g = (\(a, b) => (f a, g b))
+public (&&&) : (a -> c) -> (a -> d) -> a -> (c, d)
+f &&& g = (\a => (f a, g a))
+
+-- A very poorly named `cons` over applicatives
+public
+scons : Applicative f => f a -> f (List a) -> f (List a)
+scons car cdr = pure (::) <$> car <$> cdr

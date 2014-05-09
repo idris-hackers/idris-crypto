@@ -157,9 +157,14 @@ public
 DEAKey : Type
 DEAKey = Bits 64
 
-public
 data DataEncryptionAlgorithm : Type where
-  DEA : DEAKey -> DataEncryptionAlgorithm
+  DEA' : DEAKey -> DataEncryptionAlgorithm
+
+-- We use this wrapper instead of making DEA Insecure directly because when used
+-- as part of TDEA, DEA can be treated as secure.
+public
+DEA : DEAKey -> Security DataEncryptionAlgorithm
+DEA key = MkSecure (Insecure ["DEA is not secure"]) (DEA' key)
 
 KS : DEAKey -> Vect 16 (Bits 48)
 KS key = map PC2
@@ -171,5 +176,40 @@ KS key = map PC2
 instance BlockCipher DataEncryptionAlgorithm where
   bitsPerBlock = 64
   maximumBlocks = 0
-  encryptBlock (DEA key) block = centralDEA block (KS key)
+  encryptBlock (DEA key) block = MkSecure Secure (centralDEA block (KS key))
   decryptBlock (DEA key) block = centralDEA block (reverse (KS key))
+
+public
+TDEA1Key : Type
+TDEA1Key = Vect 3 DEAKey
+
+public
+TDEA2Key : Type
+TDEA2Key = Vect 2 DEAKey
+
+public
+data TripleDataEncryptionAlogrithm : Fin2 -> Type where
+  TDEA1 : TDEA1Key -> TripleDataEncryptionAlgorithm 0
+  TDEA2 : TDEA2Key -> TripleDataEncryptionAlgorithm 1
+
+instance BlockCipher (TripleDataEncryptionAlgorithm 0) where
+  bitsPerBlock = 64
+  maximumBlocks = power 2 32
+  encryptBlock (TDEA1 key) block =
+    encryptBlock (_DEA (index 2 key))
+                 (decryptBlock (_DEA (index 1 key))
+                               (encryptBlock (_DEA (index 0 key)) block))
+  decryptBlock (TDEA1 key) block =
+    decryptBlock (_DEA (index 0 key))
+                 (encryptBlock (_DEA (index 1 key))
+                               (decryptBlock (_DEA (index 2 key)) block))
+
+instance BlockCipher (TripleDataEncryptionAlgorithm 1) where
+  bitsPerBlock = 64
+  maximumBlocks = power 2 20
+  encryptBlock (TDEA2 key) = encryptBlock (TDEA1 (key ++ [index 0 key]))
+  decryptBlock (TDEA2 key) = decryptBlock (TDEA1 (key ++ [index 0 key]))
+
+||| `modEq 4 2 5` can be read as (4 = 2) mod 5
+modEq : Num a => a -> a -> a
+modEq x y m = ((x - y) `mod` m) == 0
