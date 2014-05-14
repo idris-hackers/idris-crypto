@@ -20,18 +20,6 @@ offByOne = map (\x => case x of
                    fZ   => fZ
                    fS y => y)
 
-partition : Bits (m * n) -> Vect m (Bits n)
-partition {m=Z}         _    = Prelude.Vect.Nil
-partition {m=S m} {n=n} bits =
-  truncate (replace (plusCommutative n (m*n)) bits)
-  :: partition (truncate (shiftRightLogical (cast n) bits))
-append : Bits m -> Bits n -> Bits (m + n)
-append {m=m} {n=n} a b = shiftLeft (cast n) (zeroExtend a) `or` replace (plusCommutative n m) (zeroExtend b)
-concat : Vect m (Bits n) -> Bits (m * n)
-concat {m=Z}         _         = cast Z
-concat {m=S Z} {n=n} [bits]    = replace (sym (plusZeroRightNeutral n)) bits
-concat {m=S _}       (b::rest) = append b (concat rest)
-
 selectBits : Vect m (Fin n) -> Bits n -> Bits m
 selectBits positions input = foldl (\acc, b => shiftLeft acc (intToBits 1) `and` b)
                                    (intToBits 0)
