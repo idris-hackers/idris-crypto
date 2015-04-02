@@ -20,7 +20,7 @@ instance Ord (Mod (S n)) where
   compare (MkMod x) (MkMod y) = compare x y
 
 instance MinBound (Mod (S n)) where
-  minBound = MkMod fZ
+  minBound = MkMod FZ
 
 instance MaxBound (Mod (S n)) where
   maxBound = MkMod last
@@ -29,37 +29,37 @@ natToMod : Nat -> Mod (S n)
 natToMod {n=(S m)} x =
   MkMod (finMod (x `mod` (S (S m)))) where
     finMod : Nat -> Fin (S k)
-    finMod Z = fZ
-    finMod {k=S k} (S k) = fS (finMod k)
-    finMod _ = fZ
-natToMod _ = MkMod fZ
+    finMod Z = FZ
+    finMod {k=S k} (S k) = FS (finMod k)
+    finMod _ = FZ
+natToMod _ = MkMod FZ
 
 modToInteger : Mod n -> Integer
 modToInteger (MkMod x) = finToInteger x
 
 rotate : Fin (S n) -> Fin (S n)
-rotate {n=Z} _ = fZ
-rotate {n = S m} fZ = fS fZ
-rotate {n = S m} (fS g) = if (fS g) == last
-                          then fZ
-                          else fS (rotate g)
+rotate {n=Z} _ = FZ
+rotate {n = S m} FZ = FS FZ
+rotate {n = S m} (FS g) = if (FS g) == last
+                          then FZ
+                          else FS (rotate g)
 
 private
 modplus : Mod (S n) -> Mod (S n) -> Mod (S n)
 modplus (MkMod left) (MkMod right) = MkMod (spin left right)
   where spin : Fin (S n') -> Fin (S n) -> Fin (S n)
-        spin fZ right = right
+        spin FZ right = right
         spin {n' = Z} left right = rotate right
-        spin {n' = S m} (fS left) right = rotate (spin left right)
+        spin {n' = S m} (FS left) right = rotate (spin left right)
 
 instance Semigroup (Mod (S n)) where
   (<+>) = modplus
 
 instance Monoid (Mod (S n)) where
-  neutral = MkMod fZ
+  neutral = MkMod FZ
 
 instance Group (Mod (S n)) where
-  inverse (MkMod fZ) = MkMod fZ
+  inverse (MkMod FZ) = MkMod FZ
   inverse {n=n} (MkMod m) = natToMod ((S n) - (finToNat m))
 
 instance Num (Mod (S n)) where
