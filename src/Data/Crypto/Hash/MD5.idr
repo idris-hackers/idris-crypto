@@ -1,11 +1,14 @@
 module Data.Crypto.Hash.MD5
 
+import Data.Bits
+import Data.Vect
+
 import Data.Crypto.Hash
 import Data.Crypto.Util
 
 %default total
 
-public
+public export
 data MessageDigest5 : Type where
   MD5 : Vect 4 (Bits 32) -> MessageDigest5
 
@@ -13,7 +16,6 @@ s : Vect 64 Nat
 -- s = concat (map (Prelude.Vect.concat . replicate 4)
 --                 [[7, 12, 17, 22],
 --                  [5,  9, 14, 20],
-
 --                  [4, 11, 16, 23],
 --                  [6, 10, 15, 21]])
 s = [7, 12, 17, 22,  7, 12, 17, 22,  7, 12, 17, 22,  7, 12, 17, 22,
@@ -41,16 +43,14 @@ K = map intToBits
          0x6fa87e4f, 0xfe2ce6e0, 0xa3014314, 0x4e0811a1,
          0xf7537e82, 0xbd3af235, 0x2ad7d2bb, 0xeb86d391]
 
-implementation Hash MessageDigest5 where
-  blockLength = 512
-  outputLength = 128
-  initialize {m=m} {n=n} msg =
+implementation Hash MessageDigest5 512 128 where
+  initialize {m=m} {n=n} _ msg =
     let msgLength = m * n
-    in let padSize = 448 - (msgLength `mod` 512)
+    in let padSize = 448 `minus` (msgLength `mod` 512)
        in fst (partition' (append (concat msg)
                                   (append (intToBits {n=padSize} (cast (power 2 padSize `div` 2)))
                                           (intToBits {n=64} (cast msgLength)))))
-  initialContext = MD5 (map intToBits [0x67452301, 0xefcdab89, 0x98badcfe, 0x10325476])
+  initialContext _ = MD5 (map intToBits [0x67452301, 0xefcdab89, 0x98badcfe, 0x10325476])
   updateContext (MD5 [A, B, C, D]) chunk with (the (Vect 16 (Bits 32)) (partition chunk))
     | M = MD5 (zipWith plus [A, B, C, D] (foldl iteration [A, B, C, D] [0..63]))
     where iteration : Vect 4 (Bits 32) -> Fin 64 -> Vect 4 (Bits 32)

@@ -1,6 +1,7 @@
 module Data.Crypto.Encryption.Block.EncryptionMode
 
 import Data.Bits
+import Data.Crypto.Encryption.Block
 
 %default total
 %access public export

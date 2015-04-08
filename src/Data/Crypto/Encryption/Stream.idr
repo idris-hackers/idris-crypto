@@ -26,10 +26,16 @@ decryptStream :
   StreamCipher k bitsPerChunk => k -> Stream (Bits bitsPerChunk) -> Stream (Bits bitsPerChunk)
 decryptStream = confoundStream
 
+takeV : (n : Nat) -> (xs : Stream a) -> Vect n a
+takeV Z     _         = []
+takeV (S n) (x :: xs) = x :: (takeV n xs)
+
 confoundMessage :
   StreamCipher k bitsPerChunk => k -> List (Bits bitsPerChunk) -> List (Bits bitsPerChunk)
 confoundMessage key message =
-  zipWith xor (Stream.take (length message) (generateKeystream key)) message
+  toList (zipWith xor
+                  (takeV (length message) (generateKeystream key))
+                  (fromList message))
 
 implementation StreamCipher sc b => Encrypter sc b where
   encryptMessage = confoundMessage

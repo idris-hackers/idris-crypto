@@ -98,6 +98,7 @@ partition {m=Z}       _    = []
 partition {m=S m} {n} bits =
   truncate (replace (plusCommutative n (m*n)) bits)
    :: partition (truncate (shiftRightLogical bits (intToBits (cast n))))
+
 public export
 partition' : Bits m -> (List (Bits n), (p : Nat ** Bits p))
 partition' {m} {n} bits = part m bits
@@ -109,13 +110,17 @@ partition' {m} {n} bits = part m bits
           else
             first (List.(::) (truncate (replace (sym (minusPlusIdentity r n)) (shiftRightLogical bits (intToBits (cast (r `minus` n)))))))
                   (part q (truncate (replace (sym (plusMinusIdentity r n)) bits)))
+
 public export
 append : Bits m -> Bits n -> Bits (m + n)
 append {m} {n} a b = shiftLeft (zeroExtend a) (intToBits (cast n)) `or` (rewrite plusCommutative m n in zeroExtend b)
+
 public export
 concat : Vect m (Bits n) -> Bits (m * n)
 concat {m=Z}       _         = intToBits 0
 concat {m=S Z} {n} [bits]    = rewrite plusZeroRightNeutral n in bits
 concat {m=S _}     (b::rest) = append b (concat rest)
-public export repartition : Vect m (Bits n) -> List (Bits q)
+
+public export
+repartition : Vect m (Bits n) -> List (Bits q)
 repartition = fst . partition' . Data.Crypto.Util.concat -- not at all efficient
