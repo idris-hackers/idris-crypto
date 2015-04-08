@@ -3,7 +3,7 @@ module Data.Crypto.Encryption.DEA
 import Control.Isomorphism
 import Data.Bits
 
-import Data.Crypto.Encryption.BlockCipher
+import Data.Crypto.Encryption.Block
 import Data.Crypto.Util
 
 %default total
