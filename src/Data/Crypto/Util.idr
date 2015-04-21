@@ -33,6 +33,11 @@ divCeil x y = case x `mod` y of
                 S _ => S (x `div` y)
 
 public export
+natToFi : (i : Nat) -> LTE i n -> Fin (S n)
+natToFi  Z     LTEZero    = FZ
+natToFi (S k) (LTESucc p) = FS (natToFi k p)
+
+public export
 finToBits : Fin n -> Bits (nextPow2 n)
 finToBits = intToBits . finToInteger
 
@@ -41,9 +46,15 @@ modToBits : Mod n -> Bits (nextPow2 n)
 modToBits = intToBits . modToInteger
 
 public export
-rotateLeft : Bits n -> Nat -> Bits n
-rotateLeft {n=Z} bits _ = bits
-rotateLeft {n=S n} bits rot =
+rotateLeft : Nat -> Bits n -> Bits n
+rotateLeft {n=n} rot bits =
+  let norm = modNatNZ rot (S n) (uninhabited . sym)
+  in shiftLeft bits (intToBits (cast norm)) `or` shiftRightLogical bits (intToBits (cast ((S n) `minus` norm)))
+
+-- FIXME: This is rotateLeft currently. Need to change the impl
+public export
+rotateRight : Nat -> Bits n -> Bits n
+rotateRight {n=n} rot bits =
   let norm = modNatNZ rot (S n) (uninhabited . sym)
   in shiftLeft bits (intToBits (cast norm)) `or` shiftRightLogical bits (intToBits (cast ((S n) `minus` norm)))
 

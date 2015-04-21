@@ -70,8 +70,8 @@ implementation Hash MessageDigest5 512 128 where
                                      (iNat*7) `tightmod` 16)
                in [C,
                    B,
-                   B `plus` rotateLeft ((A `plus` F) `plus` (index i K `plus` index g M))
-                                       (index i s),
+                   B `plus` rotateLeft (index i s)
+                                       ((A `plus` F) `plus` (index i K `plus` index g M)),
                    D]
   finalize (MD5 context) = concat context
 

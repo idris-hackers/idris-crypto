@@ -40,6 +40,9 @@ natToMod _ = MkMod FZ
 modToInteger : Mod n -> Integer
 modToInteger (MkMod x) = finToInteger x
 
+modToNat : Mod n -> Nat
+modToNat (MkMod x) = finToNat x
+
 rotate : Fin (S n) -> Fin (S n)
 rotate {n=Z} _ = FZ
 rotate {n = S m} FZ = FS FZ
