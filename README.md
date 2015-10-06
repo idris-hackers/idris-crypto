@@ -1,6 +1,8 @@
 idris-crypto
 ============
 
+[![Join the chat at https://gitter.im/idris-hackers/idris-crypto](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/idris-hackers/idris-crypto?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
+
 This project looks to develop cryptographic primitives using the general purpose functional language [Idris](http://www.idris-lang.org).
 
 It is important to note that the Idris language is first and foremost a research project, and thus the tooling provided by `idris-crypto` should not necessarily be seen as production ready nor for industrial use.
