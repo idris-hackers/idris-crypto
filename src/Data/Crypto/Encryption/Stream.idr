@@ -1,12 +1,15 @@
 module Data.Crypto.Encryption.Stream
 
-import Data.Crypto.Util
+import Data.Bits
+import Data.Vect
+
 import Data.Crypto.Encryption
+import Data.Crypto.Util
 
 %default total
-%access public
+%access public export
 
-class Cipher k => StreamCipher k where
+interface Cipher k => StreamCipher k where
   generateKeystream : k -> Stream (Bits bitsPerChunk)
 
 -- Stream ciphers are automorphic, so the encryption and decryption algorithms
@@ -15,7 +18,7 @@ class Cipher k => StreamCipher k where
 
 confoundStream :
   StreamCipher k => k -> Stream (Bits bitsPerChunk) -> Stream (Bits bitsPerChunk)
-confoundStream key = Prelude.Stream.zipWith xor (generateKeystream key)
+confoundStream key = Stream.zipWith xor (generateKeystream key)
 encryptStream :
   StreamCipher k => k -> Stream (Bits bitsPerChunk) -> Stream (Bits bitsPerChunk)
 encryptStream = confoundStream
@@ -26,18 +29,18 @@ decryptStream = confoundStream
 confoundMessage :
   StreamCipher k => k -> List (Bits bitsPerChunk) -> List (Bits bitsPerChunk)
 confoundMessage key message =
-  toList (Prelude.Vect.zipWith xor
-                               (Prelude.Stream.take (length message)
-                                                    (generateKeystream key))
-                               (fromList message))
+  zipWith xor (Stream.take (length message) (generateKeystream key)) message
 
-instance StreamCipher sc => Encrypter sc where
+implementation StreamCipher sc => Encrypter sc where
   encryptMessage = confoundMessage
 
-instance StreamCipher sc => Decrypter sc where
+implementation StreamCipher sc => Decrypter sc where
   decryptMessage = confoundMessage
 
-instance (StreamCipher sc, Encrypter sc, Decrypter sc) => SymmetricCipher sc where
+implementation (StreamCipher sc, Encrypter sc, Decrypter sc) => SymmetricCipher sc where
 
+-- TODO this should be solved by #3936
+{-
 confound : (StreamCipher k, Serializable i, Serializable o) => k -> i -> o
 confound key = decode . confoundMessage key . encode
+-}

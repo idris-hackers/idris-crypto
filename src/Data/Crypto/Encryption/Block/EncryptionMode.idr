@@ -3,21 +3,21 @@ module Data.Crypto.Encryption.Block.EncryptionMode
 import Data.Bits
 
 %default total
-%access public
+%access public export
 
 data ElectronicCookbook : Nat -> Type where
   ECB : ElectronicCookbook n
 
 -- This is ECB (Electronic Cookbook) - no initialization vector
 -- ECB should be considered insecure regardless of the cipher used
-instance EncryptionMode ElectronicCookbook where
+implementation EncryptionMode ElectronicCookbook where
   encryptBlocks key _ blocks = map (encryptBlock key) blocks
   decryptBlocks key _ blocks = map (decryptBlock key) blocks
 
 data CipherBlockChainingMode : Nat -> Type where
   CBC : Bits n -> CipherBlockChainingMode n
 
-instance EncryptionMode CipherBlockChainingMode where
+implementation EncryptionMode CipherBlockChainingMode where
   encryptBlocks _ _ [] = []
   encryptBlocks key (CBC iv) (plain::rest) =
     let ciph = encryptBlock key (plain `xor` iv)
@@ -29,7 +29,7 @@ instance EncryptionMode CipherBlockChainingMode where
 data PropagatingCipherBlockChainingMode : Nat -> Type where
   PCBC : Bits n -> PropagatingCipherBlockChainingMode n
 
-instance EncryptionMode PropagatingCipherBlockChainingMode where
+implementation EncryptionMode PropagatingCipherBlockChainingMode where
   encryptBlocks _ _ [] = []
   encryptBlocks key (PCBC iv) (plain::rest) =
     let ciph = encryptBlock key (plain `xor` iv)
@@ -41,8 +41,8 @@ instance EncryptionMode PropagatingCipherBlockChainingMode where
 
 data CipherFeedbackMode : Nat -> Type where
   CFB : Bits n -> CipherFeedbackMode n
-  
-instance EncryptionMode CipherFeedbackMode where
+
+implementation EncryptionMode CipherFeedbackMode where
   encryptBlocks _ _ [] = []
   encryptBlocks key (CFB iv) (plain::rest) =
     let ciph = encryptBlock key iv `xor` plain
@@ -54,7 +54,7 @@ instance EncryptionMode CipherFeedbackMode where
 data OutputFeedbackMode : Nat -> Type where
   OFB : Bits n -> OutputFeedbackMode n
 
-instance EncryptionMode OutputFeedbackMode where
+implementation EncryptionMode OutputFeedbackMode where
   encryptBlocks _ _ [] = []
   encryptBlocks key (OFB iv) (plain::rest) =
     let newIV = encryptBlock key iv

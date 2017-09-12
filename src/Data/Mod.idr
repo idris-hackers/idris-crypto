@@ -1,36 +1,39 @@
 module Data.Mod
 
+import Control.Algebra
+import Data.Fin
+
 %default total
-%access public
+%access public export
 
 ||| Modular arithmetic
 data Mod : (n : Nat) -> Type where
   MkMod : (fin : Fin n) -> Mod n
 
-instance Eq (Mod n) where
+implementation Eq (Mod n) where
   (==) (MkMod x) (MkMod y) = x == y
 
-instance Cast (Mod n) Nat where
+implementation Cast (Mod n) Nat where
   cast (MkMod x) = cast x
 
-instance Cast (Mod n) (Fin n) where
+implementation Cast (Mod n) (Fin n) where
   cast (MkMod x) = x
 
-instance Ord (Mod (S n)) where
+implementation Ord (Mod (S n)) where
   compare (MkMod x) (MkMod y) = compare x y
 
-instance MinBound (Mod (S n)) where
+implementation MinBound (Mod (S n)) where
   minBound = MkMod FZ
 
-instance MaxBound (Mod (S n)) where
+implementation MaxBound (Mod (S n)) where
   maxBound = MkMod last
 
 natToMod : Nat -> Mod (S n)
 natToMod {n=(S m)} x =
-  MkMod (finMod (x `mod` (S (S m)))) where
+  MkMod (finMod (modNatNZ x (S (S m)) (uninhabited . sym))) where
     finMod : Nat -> Fin (S k)
     finMod Z = FZ
-    finMod {k=S k} (S k) = FS (finMod k)
+    finMod {k=S k'} (S l) = FS (finMod {k=k'} l)
     finMod _ = FZ
 natToMod _ = MkMod FZ
 
@@ -52,22 +55,24 @@ modplus (MkMod left) (MkMod right) = MkMod (spin left right)
         spin {n' = Z} left right = rotate right
         spin {n' = S m} (FS left) right = rotate (spin left right)
 
-instance Semigroup (Mod (S n)) where
+implementation Semigroup (Mod (S n)) where
   (<+>) = modplus
 
-instance Monoid (Mod (S n)) where
+implementation Monoid (Mod (S n)) where
   neutral = MkMod FZ
 
-instance Group (Mod (S n)) where
+implementation Group (Mod (S n)) where
   inverse (MkMod FZ) = MkMod FZ
-  inverse {n=n} (MkMod m) = natToMod ((S n) - (finToNat m))
+  inverse {n=n} (MkMod m) = natToMod ((S n) `minus` (finToNat m))
 
-instance Num (Mod (S n)) where
+implementation Num (Mod (S n)) where
   (+) = modplus
-  (-) = (<->)
   (*) (MkMod a) (MkMod b) = fromInteger (finToInteger a * finToInteger b)
-  abs = id
   fromInteger {n=n} x = if x < 0
-                        then inverse (natToMod (fromInteger (-x) `mod` S n))
-                        else natToMod (fromInteger x `mod` S n)
+                        then inverse (natToMod (modNatNZ (fromInteger (-x)) (S n) (uninhabited . sym)))
+                        else natToMod (modNatNZ (fromInteger x) (S n) (uninhabited . sym))
 
+implementation Neg (Mod (S n)) where
+  negate = const (MkMod FZ)
+  (-) = (<->)
+  abs = id

@@ -9,8 +9,8 @@ import Data.Crypto.Encryption
 
 ||| for a block cypher, you only need to provide functions to encrypt/decrypt a
 ||| single block.
-public
-class BlockCipher k where
+public export
+interface BlockCipher k where
   bitsPerBlock : Nat
   maximumBlocks : Nat
   encryptBlock : k -> Bits bitsPerBlock -> Bits bitsPerBlock
@@ -19,8 +19,8 @@ class BlockCipher k where
   -- blockTranslation = MkIso (encryptBlock k) (decryptBlock k)
 
 ||| The encryption mode specifies how to apply a block cipher to multiple blocks
-public
-class EncryptionMode (em : Nat -> Type) where
+public export
+interface EncryptionMode (em : Nat -> Type) where
   encryptBlocks : BlockCipher k
                   => k -> em bitsPerBlock -> List (Bits bitsPerBlock)
                   -> List (Bits bitsPerBlock)
@@ -28,17 +28,19 @@ class EncryptionMode (em : Nat -> Type) where
                   => k -> em bitsPerBlock -> List (Bits bitsPerBlock)
                   -> List (Bits bitsPerBlock)
 
-instance (BlockCipher bc, EncryptionMode em) =>
+{-
+implementation (BlockCipher bc, EncryptionMode em) =>
          Cipher (bc, em bitsPerBlock) where
   bitsPerChunk = bitsPerBlock
 
-instance (BlockCipher bc, EncryptionMode em) =>
+implementation (BlockCipher bc, EncryptionMode em) =>
          Encrypter (bc, em bitsPerBlock) where
   encryptMessage = uncurry encryptBlocks
 
-instance (BlockCipher bc, EncryptionMode em) =>
+implementation (BlockCipher bc, EncryptionMode em) =>
          Decrypter (bc, em bitsPerBlock) where
   decryptMessage = uncurry decryptBlocks
 
-instance (BlockCipher bc, EncryptionMode em) =>
+implementation (BlockCipher bc, EncryptionMode em) =>
          SymmetricCipher (bc, em bitsPerBlock) where
+-}

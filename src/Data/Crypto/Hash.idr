@@ -4,7 +4,7 @@ import Data.Bits
 
 %default total
 
-class Hash h where
+interface Hash h where
   blockLength : Nat
   outputLength : Nat
   initialize : Vect m (Bits n) -> List (Bits blockLength)

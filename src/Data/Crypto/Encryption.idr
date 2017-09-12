@@ -4,23 +4,26 @@ import Data.Bits
 import Data.Crypto.Util
 
 %default total
-%access public
+%access public export
 
-class Cipher c where
+interface Cipher c where
   bitsPerChunk : Nat
 
-class Cipher e => Encrypter e where
+interface Cipher e => Encrypter e where
   encryptMessage : e -> List (Bits bitsPerChunk) -> List (Bits bitsPerChunk)
-  
-class Cipher d => Decrypter d where
+
+interface Cipher d => Decrypter d where
   decryptMessage : d -> List (Bits bitsPerChunk) -> List (Bits bitsPerChunk)
 
+-- TODO this should be solved by #3936
+{-
 encrypt : (Encrypter c, Serializable pt, Serializable ct) => c -> pt -> ct
 encrypt cipher = decode . encryptMessage cipher . encode
 
 decrypt : (Decrypter c, Serializable pt, Serializable ct) => c -> pt -> ct
 decrypt cipher = decode . decryptMessage cipher . encode
+-}
 
-class (Encrypter c, Decrypter c) => SymmetricCipher c where
+interface (Encrypter c, Decrypter c) => SymmetricCipher c where
 
-class (Encrypter p, Decrypter v) => AsymmetricCipher p v where
+interface (Encrypter p, Decrypter v) => AsymmetricCipher p v where

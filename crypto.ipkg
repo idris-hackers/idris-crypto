@@ -2,6 +2,6 @@ package crypto
 
 sourcedir = src
 modules = Data.Crypto.Encryption.Stream.ARC4,
-          Data.Crypto.Encryption.Block.TDEA,
-          Data.Crypto.MAC.SHS
-opts = ""
+          Data.Crypto.Encryption.Block.TDEA
+
+opts = "-p contrib --partial-eval"
