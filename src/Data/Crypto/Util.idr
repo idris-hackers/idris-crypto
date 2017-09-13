@@ -11,15 +11,20 @@ import Data.Mod
 trim : Bits (1 + n) -> Bits n
 trim b = truncate (shiftRightLogical (intToBits 1) b)
 
--- bitsToFin : Bits n -> Fin (power 2 n)
--- bitsToFin {n=Z}   _ = FZ
--- bitsToFin {n=S _} b = let x = FS (FS FZ) * (bitsToFin (trim b))
---                       in if (b `and` (intToBits 1)) == (intToBits 0)
---                          then x
---                          else FS x
--- bitsToFin {n=n} bits = fromMaybe (replace ((powerSuccPowerLeft 2 n)) FZ) (integerToFin (bitsToInt bits) (power 2 n))
-
-
+public export
+bitsToFin : Bits n -> Fin (power 2 n)
+bitsToFin {n=Z}   _ = FZ
+--bitsToFin {n=S _} b = let x = FS (FS FZ) * (bitsToFin (trim b))
+--                      in if (b `and` (intToBits 1)) == (intToBits 0)
+--                         then x
+--                         else FS x
+bitsToFin {n=S n} bits = fromMaybe (rewrite snd $ pow2NotZ n in FZ) (integerToFin (bitsToInt bits) (power 2 (S n)))
+  where
+  pow2NotZ : (n: Nat) -> (k ** power 2 n = S k)
+  pow2NotZ  Z    = (Z**Refl)
+  pow2NotZ (S n) = let (k**prf) = pow2NotZ n in
+                   rewrite prf in
+                   (k+(S (k+0))**Refl)
 
 partial
 divCeil : Nat -> Nat -> Nat
@@ -76,39 +81,41 @@ interface Serializable a where
 infixr 3 ***
 infixr 3 &&&
 public export first : (a -> c) -> (a, b) -> (c, b)
-first f = (\(a, b) => (f a, b))
+first f = \(a, b) => (f a, b)
 public export second : (b -> d) -> (a, b) -> (a, d)
-second f = (\(a, b) => (a, f b))
+second f = \(a, b) => (a, f b)
 public export (***) : (a -> c) -> (b -> d) -> (a, b) -> (c, d)
-f *** g = (\(a, b) => (f a, g b))
+f *** g = \(a, b) => (f a, g b)
 public export (&&&) : (a -> c) -> (a -> d) -> a -> (c, d)
-f &&& g = (\a => (f a, g a))
+f &&& g = \a => (f a, g a)
 
 postulate minusPlusIdentity : (m, n : Nat) -> (m `minus` n) + n = m
 postulate plusMinusIdentity : (m, n : Nat) -> n + (m `minus` n) = m
 
 public export
 partition : Bits (m * n) -> Vect m (Bits n)
-partition {m=Z}         _    = []
-partition {m=S m} {n=n} bits =
+partition {m=Z}       _    = []
+partition {m=S m} {n} bits =
   truncate (replace (plusCommutative n (m*n)) bits)
-  :: partition (truncate (shiftRightLogical bits (intToBits (cast n))))
+   :: partition (truncate (shiftRightLogical bits (intToBits (cast n))))
 public export
 partition' : Bits m -> (List (Bits n), (p : Nat ** Bits p))
-partition' {m=m} {n=n}   bits = part m bits
+partition' {m} {n} bits = part m bits
   where part : Nat -> Bits r -> (List (Bits n), (p : Nat ** Bits p))
-        part Z bits = ([], (0 ** intToBits 0))
-        part {r=r} (S q) bits = if r < n
-                                then ([], (r ** bits))
-                                else first (Prelude.List.(::) (truncate (replace (sym (minusPlusIdentity r n)) (shiftRightLogical bits (intToBits (cast (r `minus` n)))))))
-             (part q (truncate (replace (sym (plusMinusIdentity r n)) bits)))
+        part      Z    bits = ([], (0 ** intToBits 0))
+        part {r} (S q) bits =
+          if r < n
+          then ([], (r ** bits))
+          else
+            first (List.(::) (truncate (replace (sym (minusPlusIdentity r n)) (shiftRightLogical bits (intToBits (cast (r `minus` n)))))))
+                  (part q (truncate (replace (sym (plusMinusIdentity r n)) bits)))
 public export
 append : Bits m -> Bits n -> Bits (m + n)
-append {m=m} {n=n} a b = shiftLeft (zeroExtend a) (intToBits (cast n)) `or` (rewrite plusCommutative m n in zeroExtend b)
+append {m} {n} a b = shiftLeft (zeroExtend a) (intToBits (cast n)) `or` (rewrite plusCommutative m n in zeroExtend b)
 public export
 concat : Vect m (Bits n) -> Bits (m * n)
-concat {m=Z}         _         = intToBits 0
-concat {m=S Z} {n=n} [bits]    = replace (sym (plusZeroRightNeutral n)) bits
-concat {m=S _}       (b::rest) = append b (concat rest)
+concat {m=Z}       _         = intToBits 0
+concat {m=S Z} {n} [bits]    = rewrite plusZeroRightNeutral n in bits
+concat {m=S _}     (b::rest) = append b (concat rest)
 public export repartition : Vect m (Bits n) -> List (Bits q)
 repartition = fst . partition' . Data.Crypto.Util.concat -- not at all efficient
