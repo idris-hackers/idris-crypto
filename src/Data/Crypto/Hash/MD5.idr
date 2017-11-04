@@ -77,13 +77,14 @@ implementation Hash MessageDigest5 512 128 where
 
 -- Tests
 
--- dummyMD5 = (MD5 (map intToBits [0, 0, 0, 0]))
+-- dummyMD5 : MessageDigest5
+-- dummyMD5 = MD5 (map intToBits [0, 0, 0, 0])
 
 -- shouldMatch_ : hashMessage dummyMD5 [] = intToBits 0xd41d8cd98f00b204e9800998ecf8427e
--- shouldMatch_ = refl
+-- shouldMatch_ = Refl
 
--- shouldMatch_a : hashMessage dummyMD5 (map (intToBits {n=8}) [97]) = intToBits 0cc175b9c0f1b6a831c399e269772661
--- shouldMatch_a = refl
+-- shouldMatch_a : hashMessage dummyMD5 (map (intToBits {n=8}) [97]) = intToBits 0x0cc175b9c0f1b6a831c399e269772661
+-- shouldMatch_a = Refl
 
--- shouldMatch_abc : hashMessage dummyMD5 (map (intToBits {n=8}) [97, 98, 99]) = intToBits 900150983cd24fb0d6963f7d28e17f72
--- shouldMatch_abc = refl
+-- shouldMatch_abc : hashMessage dummyMD5 (map (intToBits {n=8}) [97, 98, 99]) = intToBits 0x900150983cd24fb0d6963f7d28e17f72
+-- shouldMatch_abc = Refl

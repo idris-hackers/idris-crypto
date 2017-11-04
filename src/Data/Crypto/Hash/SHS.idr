@@ -97,7 +97,7 @@ pad512 {l=l} message = append message
                               (append (intToBits 1)
                                       (append (the (Bits (modToNat (the (Mod 512) (448 - (natToMod l + 1))))) (intToBits 0))
                                               (the (Bits 64) (intToBits (cast l)))))
-                         
+
 pad1024 : Bits l -> Bits ((div l 1024 + 1) * 1024)
 pad1024 {l=l} message = append message
                                (append (intToBits 1)
@@ -122,7 +122,13 @@ sha1sched' : Vect 16 (Bits 32) -> Vect t (Bits 32) -> Bits 32
 sha1sched' {t=t} M W =
   case isLTE t 15 of
     Yes lte => vectIndex t M lte
-    No _ => rotateLeft 1 (foldl1 xor (map (\off => index (natToFi t lteRefl - off) W) [3, 8, 14, 16]))
+    No gt => rotateLeft 1 (foldl1 xor
+                          --         (map (\off -> index (weakenN' (strMinus (natToFi t lteRefl) off)) W)
+                          --              [3, 8, 14, 16]))
+            [Vect.index (weakenN' (strMinus (natToFi t lteRefl)  3)) W,
+             Vect.index (weakenN' (strMinus (natToFi t lteRefl)  8)) W,
+             Vect.index (weakenN' (strMinus (natToFi t lteRefl) 14)) W,
+             Vect.index (weakenN' (strMinus (natToFi t lteRefl) 16)) W])
 
 -- NB: `foldl` doesn’t work here. Can we make something like `foldl`, but each
 --      step is one element, and we get a Vect of elements back at the end?  
