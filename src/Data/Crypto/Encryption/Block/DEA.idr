@@ -63,9 +63,9 @@ E = selectBits (offByOne [32,  1,  2,  3,  4,  5,
 P : Bits 32 -> Bits 32
 P = selectBits (offByOne [16,  7, 20, 21,
                           29, 12, 28, 17,
-                          1, 15, 23, 26,
-                          5, 18, 31, 10,
-                          2,  8, 24, 14,
+                           1, 15, 23, 26,
+                           5, 18, 31, 10,
+                           2,  8, 24, 14,
                           32, 27,  3,  9,
                           19, 13, 30,  6,
                           22, 11,  4, 25])
@@ -161,9 +161,7 @@ KS key = map PC2
                           [1, 1, 2, 2, 2, 2, 2, 2, 1, 2, 2, 2, 2, 2, 2, 1]))
 
 
-implementation BlockCipher DataEncryptionAlgorithm where
-  bitsPerBlock = 64
-  maximumBlocks = 0
+implementation BlockCipher DataEncryptionAlgorithm 64 0 where
   encryptBlock (DEA key) block = centralDEA block (KS key)
   decryptBlock (DEA key) block = centralDEA block (reverse (KS key))
 -}
