@@ -9,7 +9,7 @@ import Data.Crypto.Util
 %default total
 %access public export
 
-interface Cipher k => StreamCipher k where
+interface Cipher k bitsPerChunk => StreamCipher k (bitsPerChunk : Nat) | k where
   generateKeystream : k -> Stream (Bits bitsPerChunk)
 
 -- Stream ciphers are automorphic, so the encryption and decryption algorithms
@@ -17,30 +17,28 @@ interface Cipher k => StreamCipher k where
 -- can just use `confound*` to handle whichever way you want.
 
 confoundStream :
-  StreamCipher k => k -> Stream (Bits bitsPerChunk) -> Stream (Bits bitsPerChunk)
+  StreamCipher k bitsPerChunk => k -> Stream (Bits bitsPerChunk) -> Stream (Bits bitsPerChunk)
 confoundStream key = Stream.zipWith xor (generateKeystream key)
 encryptStream :
-  StreamCipher k => k -> Stream (Bits bitsPerChunk) -> Stream (Bits bitsPerChunk)
+  StreamCipher k bitsPerChunk => k -> Stream (Bits bitsPerChunk) -> Stream (Bits bitsPerChunk)
 encryptStream = confoundStream
 decryptStream :
-  StreamCipher k => k -> Stream (Bits bitsPerChunk) -> Stream (Bits bitsPerChunk)
+  StreamCipher k bitsPerChunk => k -> Stream (Bits bitsPerChunk) -> Stream (Bits bitsPerChunk)
 decryptStream = confoundStream
 
 confoundMessage :
-  StreamCipher k => k -> List (Bits bitsPerChunk) -> List (Bits bitsPerChunk)
+  StreamCipher k bitsPerChunk => k -> List (Bits bitsPerChunk) -> List (Bits bitsPerChunk)
 confoundMessage key message =
   zipWith xor (Stream.take (length message) (generateKeystream key)) message
 
-implementation StreamCipher sc => Encrypter sc where
+implementation StreamCipher sc b => Encrypter sc b where
   encryptMessage = confoundMessage
 
-implementation StreamCipher sc => Decrypter sc where
+implementation StreamCipher sc b => Decrypter sc b where
   decryptMessage = confoundMessage
 
-implementation (StreamCipher sc, Encrypter sc, Decrypter sc) => SymmetricCipher sc where
+implementation (StreamCipher sc b, Encrypter sc b, Decrypter sc b) =>
+  SymmetricCipher sc b where
 
--- TODO this should be solved by #3936
-{-
-confound : (StreamCipher k, Serializable i, Serializable o) => k -> i -> o
+confound : (StreamCipher k _, Serializable i, Serializable o) => k -> i -> o
 confound key = decode . confoundMessage key . encode
--}

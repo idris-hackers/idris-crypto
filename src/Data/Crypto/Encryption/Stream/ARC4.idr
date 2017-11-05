@@ -1,6 +1,7 @@
 module Data.Crypto.Encryption.Stream.ARC4
 
 import Control.Monad.State
+import Data.Bits
 import Data.Fin
 import Data.Vect
 
@@ -52,10 +53,7 @@ PGRA i j S = let newI = i + 1
                       (modToBits (index (cast (index (cast newI) newS + index (cast newJ) newS)) newS))
                       (PGRA newI newJ newS)
 
-implementation Cipher (AllegedRivestCipher4 n) where
-  bitsPerChunk = 8
+implementation Cipher (AllegedRivestCipher4 n) 8 where
 
-{-
-implementation StreamCipher (AllegedRivestCipher4 n) where
+implementation StreamCipher (AllegedRivestCipher4 n) 8 where
   generateKeystream (ARC4 key) = PGRA 0 0 (KSA key)
--}
