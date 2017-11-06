@@ -1,7 +1,11 @@
 module Data.Crypto.Encryption.Block.EncryptionMode
 
 import Data.Bits
+
+import Data.Crypto.Encryption
 import Data.Crypto.Encryption.Block
+import Data.Crypto.Encryption.Stream
+import Data.Crypto.Util
 
 %default total
 %access public export
@@ -64,3 +68,36 @@ implementation EncryptionMode OutputFeedbackMode where
   decryptBlocks key (OFB iv) (ciph::rest) =
     let newIV = decryptBlock key iv
     in (ciph `xor` newIV) :: decryptBlocks key (OFB newIV) rest
+
+-- ||| `OutputFeedbackMode` allows any `BlockCipher` to be treated as a
+-- ||| `StreamCipher`.
+-- implementation BlockCipher b bitsPerBlock _ => StreamCipher (b, OutputFeedbackMode bitsPerBlock) bitsPerBlock where
+--   generateKeystream (b, OFB iv) =
+--     let newIV = encryptBlock b iv
+--     in newIV :: (generateKeystream (b, OFB newIV))
+
+||| Counter mode takes a nonce, an initial “counter” value, and a function to
+||| get the next counter value.
+data CounterMode : Nat -> Type where
+  CTR : Bits m -> Bits n -> (Bits n -> Bits n) -> CounterMode (m + n)
+
+||| The most common counter mode starts at 0 and moves sequentially through the
+||| natural numbers.
+incrementalCTR : Bits m -> CounterMode (m + n)
+incrementalCTR m = CTR m (intToBits 0) (plus (intToBits 1))
+
+implementation EncryptionMode CounterMode where
+  encryptBlocks _ _ [] = []
+  encryptBlocks key (CTR nonce counter f) (plain::rest) =
+    (plain `xor` encryptBlock key (append nonce counter))
+      :: encryptBlocks key (CTR nonce (f counter) f) rest
+  decryptBlocks _ _ [] = []
+  decryptBlocks key (CTR nonce counter f) (ciph::rest) =
+    (ciph `xor` decryptBlock key (append nonce counter))
+      :: decryptBlocks key (CTR nonce (f counter) f) rest
+
+-- ||| 'CounterMode' allows any `BlockCipher` to be treated as a `StreamCipher`.
+-- implementation BlockCipher b bitsPerBlock _ => StreamCipher (b, CounterMode bitsPerBlock) bitsPerBlock where
+--   generateKeystream (b, CTR nonce counter f) =
+--     encryptBlock b (append nonce counter)
+--       :: generateKeystream (b, CTR nonce (f counter) f)

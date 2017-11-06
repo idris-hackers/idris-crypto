@@ -2,6 +2,7 @@ package crypto
 
 sourcedir = src
 modules = Data.Crypto.Encryption.Block.DEA,
+          Data.Crypto.Encryption.Block.EncryptionMode,
           Data.Crypto.Encryption.Block.TDEA,
           Data.Crypto.Encryption.Stream.ARC4,
           Data.Crypto.Hash.MD5
