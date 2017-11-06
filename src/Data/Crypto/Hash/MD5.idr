@@ -5,23 +5,25 @@ import Data.Vect
 
 import Data.Crypto.Hash
 import Data.Crypto.Util
+import Data.Mod
 
 %default total
 
+||| INSECURE!
 public export
 data MessageDigest5 : Type where
   MD5 : Vect 4 (Bits 32) -> MessageDigest5
 
 s : Vect 64 Nat
--- s = concat (map (Prelude.Vect.concat . replicate 4)
---                 [[7, 12, 17, 22],
---                  [5,  9, 14, 20],
---                  [4, 11, 16, 23],
---                  [6, 10, 15, 21]])
-s = [7, 12, 17, 22,  7, 12, 17, 22,  7, 12, 17, 22,  7, 12, 17, 22,
-     5,  9, 14, 20,  5,  9, 14, 20,  5,  9, 14, 20,  5,  9, 14, 20,
-     4, 11, 16, 23,  4, 11, 16, 23,  4, 11, 16, 23,  4, 11, 16, 23,
-     6, 10, 15, 21,  6, 10, 15, 21,  6, 10, 15, 21,  6, 10, 15, 21]
+s = concat (map (concat . replicate 4)
+                [[7, 12, 17, 22],
+                 [5,  9, 14, 20],
+                 [4, 11, 16, 23],
+                 [6, 10, 15, 21]])
+-- s = [7, 12, 17, 22,  7, 12, 17, 22,  7, 12, 17, 22,  7, 12, 17, 22,
+--      5,  9, 14, 20,  5,  9, 14, 20,  5,  9, 14, 20,  5,  9, 14, 20,
+--      4, 11, 16, 23,  4, 11, 16, 23,  4, 11, 16, 23,  4, 11, 16, 23,
+--      6, 10, 15, 21,  6, 10, 15, 21,  6, 10, 15, 21,  6, 10, 15, 21]
 
 K : Vect 64 (Bits 32)
 -- K = map (\i => floor (abs (sin (i + 1)) * (2 `pow` 32))) [0..63]
@@ -46,10 +48,10 @@ K = map intToBits
 implementation Hash MessageDigest5 512 128 where
   initialize {m=m} {n=n} _ msg =
     let msgLength = m * n
-    in let padSize = 448 `minus` (msgLength `mod` 512)
-       in fst (partition' (append (concat msg)
-                                  (append (intToBits {n=padSize} (cast (power 2 padSize `div` 2)))
-                                          (intToBits {n=64} (cast msgLength)))))
+    in let padSize = modToNat {n=512} (natToMod 448 - natToMod msgLength)
+       in Basics.fst (partition' (append (concat msg)
+                                         (or (shiftLeft (intToBits 64) (shiftRightLogical {n=512} (intToBits 1) (intToBits (cast (power 2 padSize)))))
+                                             (intToBits (cast msgLength)))))
   initialContext _ = MD5 (map intToBits [0x67452301, 0xefcdab89, 0x98badcfe, 0x10325476])
   updateContext (MD5 [A, B, C, D]) chunk with (the (Vect 16 (Bits 32)) (partition chunk))
     | M = MD5 (zipWith plus [A, B, C, D] (foldl iteration [A, B, C, D] [0..63]))

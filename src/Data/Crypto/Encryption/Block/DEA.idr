@@ -160,6 +160,7 @@ public export
 DEAKey : Type
 DEAKey = Bits 64
 
+||| INSECURE!
 public export
 data DataEncryptionAlgorithm : Type where
   DEA : DEAKey -> DataEncryptionAlgorithm
