@@ -69,12 +69,12 @@ implementation EncryptionMode OutputFeedbackMode where
     let newIV = decryptBlock key iv
     in (ciph `xor` newIV) :: decryptBlocks key (OFB newIV) rest
 
--- ||| `OutputFeedbackMode` allows any `BlockCipher` to be treated as a
--- ||| `StreamCipher`.
--- implementation BlockCipher b bitsPerBlock _ => StreamCipher (b, OutputFeedbackMode bitsPerBlock) bitsPerBlock where
---   generateKeystream (b, OFB iv) =
---     let newIV = encryptBlock b iv
---     in newIV :: (generateKeystream (b, OFB newIV))
+||| `OutputFeedbackMode` allows any `BlockCipher` to be treated as a
+||| `StreamCipher`.
+implementation BlockCipher b bitsPerBlock _ => StreamCipher (b, OutputFeedbackMode bitsPerBlock) bitsPerBlock where
+  generateKeystream (b, OFB iv) =
+    let newIV = encryptBlock b iv
+    in newIV :: (generateKeystream (b, OFB newIV))
 
 ||| Counter mode takes a nonce, an initial “counter” value, and a function to
 ||| get the next counter value.
@@ -96,8 +96,8 @@ implementation EncryptionMode CounterMode where
     (ciph `xor` decryptBlock key (append nonce counter))
       :: decryptBlocks key (CTR nonce (f counter) f) rest
 
--- ||| 'CounterMode' allows any `BlockCipher` to be treated as a `StreamCipher`.
--- implementation BlockCipher b bitsPerBlock _ => StreamCipher (b, CounterMode bitsPerBlock) bitsPerBlock where
---   generateKeystream (b, CTR nonce counter f) =
---     encryptBlock b (append nonce counter)
---       :: generateKeystream (b, CTR nonce (f counter) f)
+||| `CounterMode` allows any `BlockCipher` to be treated as a `StreamCipher`.
+implementation BlockCipher b bitsPerBlock _ => StreamCipher (b, CounterMode bitsPerBlock) bitsPerBlock where
+  generateKeystream (b, CTR nonce counter f) =
+    encryptBlock b (append nonce counter)
+      :: generateKeystream (b, CTR nonce (f counter) f)
