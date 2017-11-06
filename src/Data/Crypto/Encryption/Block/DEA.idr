@@ -2,6 +2,7 @@ module Data.Crypto.Encryption.DEA
 
 import Control.Isomorphism
 import Data.Bits
+import Data.Vect
 
 import Data.Crypto.Encryption
 import Data.Crypto.Encryption.Block
@@ -17,8 +18,8 @@ import Data.Crypto.Util
 -- eyeball-checking), then use this to correct the difference.
 offByOne : Vect m (Fin (S (S n))) -> Vect m (Fin (S n))
 offByOne = map (\x => case x of
-                   fZ   => fZ
-                   fS y => y)
+                   FZ   => FZ
+                   FS y => y)
 
 selectBits : Vect m (Fin n) -> Bits n -> Bits m
 selectBits positions input = foldl (\acc, b => shiftLeft acc (intToBits 1) `and` b)
@@ -62,13 +63,14 @@ E = selectBits (offByOne [32,  1,  2,  3,  4,  5,
 P : Bits 32 -> Bits 32
 P = selectBits (offByOne [16,  7, 20, 21,
                           29, 12, 28, 17,
-                          1, 15, 23, 26,
-                          5, 18, 31, 10,
-                          2,  8, 24, 14,
+                           1, 15, 23, 26,
+                           5, 18, 31, 10,
+                           2,  8, 24, 14,
                           32, 27,  3,  9,
                           19, 13, 30,  6,
                           22, 11,  4, 25])
 
+{-
 select : Vect 4 (Vect 16 (Fin n)) -> Bits 6 -> Bits (nextPow2 n)
 select table bits =
   let row = bitsToFin (truncate {m=4} (or (shiftRightLogical (cast 5) (and bits (intToBits 32))) (and bits (intToBits 1))))
@@ -131,7 +133,7 @@ PC1 = selectBits (offByOne [57, 49, 41, 33, 25, 17,  9,
                              7, 62, 54, 46, 38, 30, 22,
                             14,  6, 61, 53, 45, 37, 29,
                             21, 13,  5, 28, 20, 12,  4])
-      
+
 PC2 : Bits 64 -> Bits 48
 PC2 = selectBits (offByOne [14, 17, 11, 24,  1,  5,
                              3, 28, 15,  6, 21, 10,
@@ -141,24 +143,25 @@ PC2 = selectBits (offByOne [14, 17, 11, 24,  1,  5,
                             30, 40, 51, 45, 33, 48,
                             44, 49, 39, 56, 34, 53,
                             46, 42, 50, 36, 29, 32])
-
-public
+-}
+public export
 DEAKey : Type
 DEAKey = Bits 64
 
-public
+public export
 data DataEncryptionAlgorithm : Type where
   DEA : DEAKey -> DataEncryptionAlgorithm
 
+{-
 KS : DEAKey -> Vect 16 (Bits 48)
 KS key = map PC2
              (tail (scanl (\prevKey, shift =>
                             concat (map (rotateLeft shift) (partition 32 prevKey)))
                           (PC1 key)
                           [1, 1, 2, 2, 2, 2, 2, 2, 1, 2, 2, 2, 2, 2, 2, 1]))
- 
-instance BlockCipher DataEncryptionAlgorithm where
-  bitsPerBlock = 64
-  maximumBlocks = 0
+
+
+implementation BlockCipher DataEncryptionAlgorithm 64 0 where
   encryptBlock (DEA key) block = centralDEA block (KS key)
   decryptBlock (DEA key) block = centralDEA block (reverse (KS key))
+-}
