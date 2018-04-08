@@ -78,4 +78,3 @@ implementation Num (Mod (S n)) where
 implementation Neg (Mod (S n)) where
   negate = const (MkMod FZ)
   (-) = (<->)
-  abs = id

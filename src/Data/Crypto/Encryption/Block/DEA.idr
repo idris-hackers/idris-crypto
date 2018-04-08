@@ -38,6 +38,7 @@ selectBits positions input = foldl (\acc, b => shiftLeft acc (intToBits 1) `and`
                                    (intToBits 0)
                                    (map (\x => intToBits (if getBit x input then 1 else 0)) positions)
 
+||| The initial permutation
 IP : Bits 64 -> Bits 64
 IP = selectBits (offByOne [58, 50, 42, 34, 26, 18, 10,  2,
                            60, 52, 44, 36, 28, 20, 12,  4,
@@ -48,15 +49,15 @@ IP = selectBits (offByOne [58, 50, 42, 34, 26, 18, 10,  2,
                            61, 53, 45, 37, 29, 21, 13,  5,
                            63, 55, 47, 39, 31, 23, 15,  7])
 
-IP' : Bits 64 -> Bits 64
-IP' = selectBits (offByOne [40,  8, 48, 16, 56, 24, 64, 32,
-                            39,  7, 47, 15, 55, 23, 63, 31,
-                            38,  6, 46, 14, 54, 22, 62, 30,
-                            37,  5, 45, 13, 53, 21, 61, 29,
-                            36,  4, 44, 12, 52, 20, 60, 28,
-                            35,  3, 43, 11, 51, 19, 59, 27,
-                            34,  2, 42, 10, 50, 18, 58, 26,
-                            33,  1, 41,  9, 49, 17, 57, 25])
+inverseIP : Bits 64 -> Bits 64
+inverseIP = selectBits (offByOne [40,  8, 48, 16, 56, 24, 64, 32,
+                                  39,  7, 47, 15, 55, 23, 63, 31,
+                                  38,  6, 46, 14, 54, 22, 62, 30,
+                                  37,  5, 45, 13, 53, 21, 61, 29,
+                                  36,  4, 44, 12, 52, 20, 60, 28,
+                                  35,  3, 43, 11, 51, 19, 59, 27,
+                                  34,  2, 42, 10, 50, 18, 58, 26,
+                                  33,  1, 41,  9, 49, 17, 57, 25])
 
 -- TODO: prove this
 -- permutation : Iso (Bits 64) (Bits 64)
@@ -134,7 +135,7 @@ iteration (L, R) K = (R, L `xor` f R K)
 centralDEA : Bits 64 -> Vect 16 (Bits 48) -> Bits 64
 centralDEA input keys =
   let [L, R] = the (Vect 2 (Bits 32)) (partition (IP input))
-  in IP' (uncurry (flip append) (foldl iteration (L, R) keys))
+  in inverseIP (uncurry (flip append) (foldl iteration (L, R) keys))
 
 PC1 : Bits 64 -> Bits 64
 PC1 = selectBits (offByOne [57, 49, 41, 33, 25, 17,  9,
