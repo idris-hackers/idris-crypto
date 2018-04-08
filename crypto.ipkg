@@ -9,4 +9,4 @@ modules = Data.Crypto.Encryption.Block.DEA,
           -- Data.Crypto.Hash.SHS,
           -- Data.Crypto.MAC.HMAC
 
-opts = "-p contrib --partial-eval"
+opts = "-p contrib"

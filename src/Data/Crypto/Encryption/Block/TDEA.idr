@@ -19,7 +19,6 @@ data TripleDataEncryptionAlgorithm : Fin 2 -> Type where
   TDEA1 : TDEA1Key -> TripleDataEncryptionAlgorithm 0
   TDEA2 : TDEA2Key -> TripleDataEncryptionAlgorithm 1
 
-{- TODO: Interminable type checking.
 implementation BlockCipher (TripleDataEncryptionAlgorithm 0) 64 (power 2 32) where
   encryptBlock (TDEA1 key) block =
     encryptBlock (DEA (index 2 key))
@@ -33,4 +32,3 @@ implementation BlockCipher (TripleDataEncryptionAlgorithm 0) 64 (power 2 32) whe
 implementation BlockCipher (TripleDataEncryptionAlgorithm 1) 64 (power 2 20) where
   encryptBlock (TDEA2 key) = encryptBlock (TDEA1 (key ++ [index 0 key]))
   decryptBlock (TDEA2 key) = decryptBlock (TDEA1 (key ++ [index 0 key]))
--}
