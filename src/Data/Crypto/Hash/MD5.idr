@@ -20,12 +20,9 @@ s = concat (map (concat . replicate 4)
                  [5,  9, 14, 20],
                  [4, 11, 16, 23],
                  [6, 10, 15, 21]])
--- s = [7, 12, 17, 22,  7, 12, 17, 22,  7, 12, 17, 22,  7, 12, 17, 22,
---      5,  9, 14, 20,  5,  9, 14, 20,  5,  9, 14, 20,  5,  9, 14, 20,
---      4, 11, 16, 23,  4, 11, 16, 23,  4, 11, 16, 23,  4, 11, 16, 23,
---      6, 10, 15, 21,  6, 10, 15, 21,  6, 10, 15, 21,  6, 10, 15, 21]
 
 K : Vect 64 (Bits 32)
+-- FIXME: `floor` is a `Double`, not integral.
 -- K = map (\i => floor (abs (sin (i + 1)) * (2 `pow` 32))) [0..63]
 K = map intToBits
         [0xd76aa478, 0xe8c7b756, 0x242070db, 0xc1bdceee,
@@ -79,14 +76,14 @@ implementation Hash MessageDigest5 512 128 where
 
 -- Tests
 
--- dummyMD5 : MessageDigest5
--- dummyMD5 = MD5 (map intToBits [0, 0, 0, 0])
+dummyMD5 : MessageDigest5
+dummyMD5 = MD5 (map intToBits [0, 0, 0, 0])
 
--- shouldMatch_ : hashMessage dummyMD5 [] = intToBits 0xd41d8cd98f00b204e9800998ecf8427e
+-- shouldMatch_ : hashMessage {n=8} dummyMD5 [] = intToBits 0xd41d8cd98f00b204e9800998ecf8427e
 -- shouldMatch_ = Refl
 
--- shouldMatch_a : hashMessage dummyMD5 (map (intToBits {n=8}) [97]) = intToBits 0x0cc175b9c0f1b6a831c399e269772661
--- shouldMatch_a = Refl
+shouldMatch_a : hashMessage dummyMD5 (map (intToBits {n=8}) [97]) = intToBits 0x0cc175b9c0f1b6a831c399e269772661
+shouldMatch_a = Refl
 
--- shouldMatch_abc : hashMessage dummyMD5 (map (intToBits {n=8}) [97, 98, 99]) = intToBits 0x900150983cd24fb0d6963f7d28e17f72
--- shouldMatch_abc = Refl
+shouldMatch_abc : hashMessage dummyMD5 (map (intToBits {n=8}) [97, 98, 99]) = intToBits 0x900150983cd24fb0d6963f7d28e17f72
+shouldMatch_abc = Refl

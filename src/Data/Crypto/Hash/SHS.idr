@@ -1,3 +1,4 @@
+||| [specification](http://csrc.nist.gov/publications/fips/fips180-4/fips-180-4.pdf)
 module Data.Crypto.Hash.SHS
 
 import Data.Bits
@@ -7,7 +8,6 @@ import Data.Fin
 import Data.Mod
 import Data.Vect
 
--- defined in http://csrc.nist.gov/publications/fips/fips180-4/fips-180-4.pdf
 
 -- Functions
 
