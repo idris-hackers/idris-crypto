@@ -1,27 +1,28 @@
 module Data.Crypto.Hash.MD5
 
+import Data.Bits
+import Data.Vect
+
 import Data.Crypto.Hash
 import Data.Crypto.Util
+import Data.Mod
 
 %default total
 
-public
+||| INSECURE!
+public export
 data MessageDigest5 : Type where
   MD5 : Vect 4 (Bits 32) -> MessageDigest5
 
 s : Vect 64 Nat
--- s = concat (map (Prelude.Vect.concat . replicate 4)
---                 [[7, 12, 17, 22],
---                  [5,  9, 14, 20],
-
---                  [4, 11, 16, 23],
---                  [6, 10, 15, 21]])
-s = [7, 12, 17, 22,  7, 12, 17, 22,  7, 12, 17, 22,  7, 12, 17, 22,
-     5,  9, 14, 20,  5,  9, 14, 20,  5,  9, 14, 20,  5,  9, 14, 20,
-     4, 11, 16, 23,  4, 11, 16, 23,  4, 11, 16, 23,  4, 11, 16, 23,
-     6, 10, 15, 21,  6, 10, 15, 21,  6, 10, 15, 21,  6, 10, 15, 21]
+s = concat (map (concat . replicate 4)
+                [[7, 12, 17, 22],
+                 [5,  9, 14, 20],
+                 [4, 11, 16, 23],
+                 [6, 10, 15, 21]])
 
 K : Vect 64 (Bits 32)
+-- FIXME: `floor` is a `Double`, not integral.
 -- K = map (\i => floor (abs (sin (i + 1)) * (2 `pow` 32))) [0..63]
 K = map intToBits
         [0xd76aa478, 0xe8c7b756, 0x242070db, 0xc1bdceee,
@@ -41,16 +42,14 @@ K = map intToBits
          0x6fa87e4f, 0xfe2ce6e0, 0xa3014314, 0x4e0811a1,
          0xf7537e82, 0xbd3af235, 0x2ad7d2bb, 0xeb86d391]
 
-implementation Hash MessageDigest5 where
-  blockLength = 512
-  outputLength = 128
-  initialize {m=m} {n=n} msg =
+implementation Hash MessageDigest5 512 128 where
+  initialize {m=m} {n=n} _ msg =
     let msgLength = m * n
-    in let padSize = 448 - (msgLength `mod` 512)
-       in fst (partition' (append (concat msg)
-                                  (append (intToBits {n=padSize} (cast (power 2 padSize `div` 2)))
-                                          (intToBits {n=64} (cast msgLength)))))
-  initialContext = MD5 (map intToBits [0x67452301, 0xefcdab89, 0x98badcfe, 0x10325476])
+    in let padSize = modToNat {n=512} (natToMod 448 - natToMod msgLength)
+       in Basics.fst (partition' (append (concat msg)
+                                         (or (shiftLeft (intToBits 64) (shiftRightLogical {n=512} (intToBits 1) (intToBits (cast (power 2 padSize)))))
+                                             (intToBits (cast msgLength)))))
+  initialContext _ = MD5 (map intToBits [0x67452301, 0xefcdab89, 0x98badcfe, 0x10325476])
   updateContext (MD5 [A, B, C, D]) chunk with (the (Vect 16 (Bits 32)) (partition chunk))
     | M = MD5 (zipWith plus [A, B, C, D] (foldl iteration [A, B, C, D] [0..63]))
     where iteration : Vect 4 (Bits 32) -> Fin 64 -> Vect 4 (Bits 32)
@@ -70,20 +69,21 @@ implementation Hash MessageDigest5 where
                                      (iNat*7) `tightmod` 16)
                in [C,
                    B,
-                   B `plus` rotateLeft ((A `plus` F) `plus` (index i K `plus` index g M))
-                                       (index i s),
+                   B `plus` rotateLeft (index i s)
+                                       ((A `plus` F) `plus` (index i K `plus` index g M)),
                    D]
   finalize (MD5 context) = concat context
 
 -- Tests
 
--- dummyMD5 = (MD5 (map intToBits [0, 0, 0, 0]))
+dummyMD5 : MessageDigest5
+dummyMD5 = MD5 (map intToBits [0, 0, 0, 0])
 
--- shouldMatch_ : hashMessage dummyMD5 [] = intToBits 0xd41d8cd98f00b204e9800998ecf8427e
--- shouldMatch_ = refl
+-- shouldMatch_ : hashMessage {n=8} dummyMD5 [] = intToBits 0xd41d8cd98f00b204e9800998ecf8427e
+-- shouldMatch_ = Refl
 
--- shouldMatch_a : hashMessage dummyMD5 (map (intToBits {n=8}) [97]) = intToBits 0cc175b9c0f1b6a831c399e269772661
--- shouldMatch_a = refl
+shouldMatch_a : hashMessage dummyMD5 (map (intToBits {n=8}) [97]) = intToBits 0x0cc175b9c0f1b6a831c399e269772661
+shouldMatch_a = Refl
 
--- shouldMatch_abc : hashMessage dummyMD5 (map (intToBits {n=8}) [97, 98, 99]) = intToBits 900150983cd24fb0d6963f7d28e17f72
--- shouldMatch_abc = refl
+shouldMatch_abc : hashMessage dummyMD5 (map (intToBits {n=8}) [97, 98, 99]) = intToBits 0x900150983cd24fb0d6963f7d28e17f72
+shouldMatch_abc = Refl

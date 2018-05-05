@@ -33,6 +33,11 @@ divCeil x y = case x `mod` y of
                 S _ => S (x `div` y)
 
 public export
+natToFi : (i : Nat) -> LTE i n -> Fin (S n)
+natToFi  Z     LTEZero    = FZ
+natToFi (S k) (LTESucc p) = FS (natToFi k p)
+
+public export
 finToBits : Fin n -> Bits (nextPow2 n)
 finToBits = intToBits . finToInteger
 
@@ -41,9 +46,15 @@ modToBits : Mod n -> Bits (nextPow2 n)
 modToBits = intToBits . modToInteger
 
 public export
-rotateLeft : Bits n -> Nat -> Bits n
-rotateLeft {n=Z} bits _ = bits
-rotateLeft {n=S n} bits rot =
+rotateLeft : Nat -> Bits n -> Bits n
+rotateLeft {n=n} rot bits =
+  let norm = modNatNZ rot (S n) (uninhabited . sym)
+  in shiftLeft bits (intToBits (cast norm)) `or` shiftRightLogical bits (intToBits (cast ((S n) `minus` norm)))
+
+-- FIXME: This is rotateLeft currently. Need to change the impl
+public export
+rotateRight : Nat -> Bits n -> Bits n
+rotateRight {n=n} rot bits =
   let norm = modNatNZ rot (S n) (uninhabited . sym)
   in shiftLeft bits (intToBits (cast norm)) `or` shiftRightLogical bits (intToBits (cast ((S n) `minus` norm)))
 
@@ -98,6 +109,7 @@ partition {m=Z}       _    = []
 partition {m=S m} {n} bits =
   truncate (replace (plusCommutative n (m*n)) bits)
    :: partition (truncate (shiftRightLogical bits (intToBits (cast n))))
+
 public export
 partition' : Bits m -> (List (Bits n), (p : Nat ** Bits p))
 partition' {m} {n} bits = part m bits
@@ -109,13 +121,17 @@ partition' {m} {n} bits = part m bits
           else
             first (List.(::) (truncate (replace (sym (minusPlusIdentity r n)) (shiftRightLogical bits (intToBits (cast (r `minus` n)))))))
                   (part q (truncate (replace (sym (plusMinusIdentity r n)) bits)))
+
 public export
 append : Bits m -> Bits n -> Bits (m + n)
 append {m} {n} a b = shiftLeft (zeroExtend a) (intToBits (cast n)) `or` (rewrite plusCommutative m n in zeroExtend b)
+
 public export
 concat : Vect m (Bits n) -> Bits (m * n)
 concat {m=Z}       _         = intToBits 0
 concat {m=S Z} {n} [bits]    = rewrite plusZeroRightNeutral n in bits
 concat {m=S _}     (b::rest) = append b (concat rest)
-public export repartition : Vect m (Bits n) -> List (Bits q)
+
+public export
+repartition : Vect m (Bits n) -> List (Bits q)
 repartition = fst . partition' . Data.Crypto.Util.concat -- not at all efficient

@@ -5,10 +5,10 @@ import Data.Bits
 import Data.Fin
 import Data.Vect
 
-import Data.Mod
 import Data.Crypto.Util
 import Data.Crypto.Encryption
 import Data.Crypto.Encryption.Stream
+import Data.Mod
 
 %default total
 %access private
